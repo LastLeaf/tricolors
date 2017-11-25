@@ -85,20 +85,48 @@ class SimpleUniform {
 class SimpleGLObject {
   constructor(simpleGL) {
     this._gl = simpleGL._gl
+    this.alpha = 1
+    this._bindings = Object.create(null)
   }
-  blendMode(s, d) {
+  setAlpha(alpha) {
+    this.alpha = alpha
+    return this
+  }
+  blendMode(s, d, c) {
     const gl = this._gl
-    this._blendMode = [gl[s], gl[d]]
+    this._blendMode = [gl[s], gl[d], c]
     return this
   }
   _prepareObject() {
     const gl = this._gl
     const blendMode = this._blendMode
     if (blendMode) {
+      if(blendMode[2]) gl.blendColor(blendMode[2][0], blendMode[2][1], blendMode[2][2], blendMode[2][3])
       gl.blendFunc(blendMode[0], blendMode[1])
     } else {
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     }
+  }
+  bind(name, cb) {
+    if (!this._bindings[name]) {
+      this._bindings[name] = [cb]
+    } else {
+      this._bindings[name].push(cb)
+    }
+  }
+  _triggerBinding(name, detail) {
+    const arr = this._bindings[name]
+    if (!arr) return
+    arr.forEach((func) => {
+      func.call(this, detail)
+    })
+  }
+  emit(pos, name, detail) {
+    this._handleEvent(pos, name, detail)
+  }
+  // eslint-disable-next-line class-methods-use-this
+  _handleEvent(pos, name, detail) {
+    throw new Error('Not implemented')
   }
 }
 
@@ -129,7 +157,6 @@ class SimpleRect extends SimpleGLObject {
     this.g = 0
     this.b = 0
     this.a = 0
-    this.childNodes = []
   }
   color(r, g, b, a) {
     this.r = r
@@ -148,7 +175,7 @@ class SimpleRect extends SimpleGLObject {
     this.h = h
     return this
   }
-  _draw(relX, relY) {
+  _draw(relX, relY, relAlpha) {
     const gl = this._gl
     const info = this._simpleGL._rectGL
     gl.useProgram(info.shaderProgram)
@@ -164,14 +191,22 @@ class SimpleRect extends SimpleGLObject {
     aPoint[6] = relX + x + w
     aPoint[7] = relY + y
     info.aPoint.write()
-    info.uColor.set(r, g, b, a)
+    info.uColor.set(r, g, b, a * this.alpha * relAlpha)
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
+  }
+  _handleEvent(pos, name, detail) {
+    if (pos.x < this.x) return
+    if (pos.x >= this.x + this.w) return
+    if (pos.y < this.y) return
+    if (pos.y >= this.y + this.h) return
+    this._triggerBinding(name, detail)
   }
 }
 
 class SimpleContainer extends SimpleGLObject {
-  constructor(simpleGL, x, y) {
+  constructor(simpleGL, x = 0, y = 0) {
     super(simpleGL)
+    this._simpleGL = simpleGL
     this._gl = simpleGL._gl
     this.x = x
     this.y = y
@@ -181,6 +216,12 @@ class SimpleContainer extends SimpleGLObject {
     this.x = x
     this.y = y
     return this
+  }
+  forEachChild(func) {
+    return this._children.forEach(func)
+  }
+  index(i) {
+    return this._children[i]
   }
   append(child) {
     this._children.push(child)
@@ -200,9 +241,21 @@ class SimpleContainer extends SimpleGLObject {
     if (index >= 0) this._children.splice(index, 1)
     return this
   }
-  _draw(relX, relY) {
+  clear() {
+    while(this._children.length) this._children.shift()
+    return this
+  }
+  _draw(relX, relY, relAlpha) {
     this._children.forEach((node) => {
-      node._draw(relX + this.x, relY + this.y)
+      node._draw(relX + this.x, relY + this.y, this.alpha * relAlpha)
+    })
+  }
+  _handleEvent(pos, name, detail) {
+    this._children.forEach((node) => {
+      node._handleEvent({
+        x: pos.x - this.x,
+        y: pos.y - this.y
+      }, name, detail)
     })
   }
 }
@@ -242,7 +295,7 @@ export class SimpleGL {
   update() {
     const gl = this._gl
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
-    this._rootContainer._draw(0, 0)
+    this._rootContainer._draw(0, 0, 1)
   }
   getRootContainer() {
     return this._rootContainer
