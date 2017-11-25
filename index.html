@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <title>TRICOLORS: a puzzle game</title>
+</head>
+<body style="background: black">
+  <canvas id="game" width="1920" height="1080"></canvas>
+  <script src="./dist/game.js"></script>
+  <script>
+    var gameCanvas = document.getElementById('game')
+    gameCanvas.style.background = 'black'
+    gameCanvas.style.position = 'fixed'
+    gameCanvas.style.margin = 'auto'
+    gameCanvas.style.top = '0'
+    gameCanvas.style.bottom = '0'
+    gameCanvas.style.left = '0'
+    gameCanvas.style.right = '0'
+    var resizeCb = function(){
+      var scale = Math.min(document.documentElement.clientWidth / 1920, document.documentElement.clientHeight / 1080)
+      gameCanvas.style.transform = 'scale(' + scale + ',' + scale + ')'
+    }
+    resizeCb()
+    window.onresize = resizeCb
+    game.init(gameCanvas)
+  </script>
+</body>
+</html>

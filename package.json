@@ -1,0 +1,28 @@
+{
+  "name": "tricolors",
+  "version": "0.1.0",
+  "description": "TRICOLORS: a puzzle game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LastLeaf/tricolors.git"
+  },
+  "author": "Fu Boquan <bqfu@163.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LastLeaf/tricolors/issues"
+  },
+  "homepage": "https://github.com/LastLeaf/tricolors#readme",
+  "devDependencies": {
+    "ajv": "^5.5.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
+    "raw-loader": "^0.5.1",
+    "webpack": "^3.8.1"
+  }
+}
