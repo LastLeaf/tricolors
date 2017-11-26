@@ -99,6 +99,7 @@ class SimpleGLObject {
   }
   _prepareObject() {
     const gl = this._gl
+    this._triggerBinding('draw')
     const blendMode = this._blendMode
     if (blendMode) {
       if(blendMode[2]) gl.blendColor(blendMode[2][0], blendMode[2][1], blendMode[2][2], blendMode[2][3])
@@ -113,6 +114,7 @@ class SimpleGLObject {
     } else {
       this._bindings[name].push(cb)
     }
+    return this
   }
   _triggerBinding(name, detail) {
     const arr = this._bindings[name]
@@ -217,6 +219,12 @@ class SimpleContainer extends SimpleGLObject {
     this.y = y
     return this
   }
+  blendMode(s, d, c) {
+    this._children.forEach((item) => {
+      item.blendMode(s, d, c)
+    })
+    return this
+  }
   forEachChild(func) {
     return this._children.forEach(func)
   }
@@ -246,6 +254,7 @@ class SimpleContainer extends SimpleGLObject {
     return this
   }
   _draw(relX, relY, relAlpha) {
+    this._prepareObject()
     this._children.forEach((node) => {
       node._draw(relX + this.x, relY + this.y, this.alpha * relAlpha)
     })

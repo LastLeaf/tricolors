@@ -1,15 +1,15 @@
 export default {
-  tutorial: [
+  tutorialSteps: [
     [2, 2],
     [2, 3],
     [2, 1]
   ],
-  userColor: 'r',
-  map: `
+  title: '#01',
+  mapStr: `
     --r--
-    -rgr-
+    -r-r-
     -rrr-
-    -rbr-
+    -r-r-
     --r--
   `
 }

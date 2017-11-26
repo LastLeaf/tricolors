@@ -4,32 +4,49 @@
   <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <title>TRICOLORS: a puzzle game</title>
 </head>
-<body style="background: #202020">
+<body style="background: #202020; overflow: hidden; margin: 0">
   <!-- <div style="position:fixed; top:50px; left:50px; width:100px; height:100px; background:#000000aa"></div> -->
   <canvas id="game" width="1920" height="1080"></canvas>
   <script src="./dist/game.js"></script>
   <script>
-    var gameCanvas = document.getElementById('game')
-    var gameCanvasScale = 1
-    gameCanvas.style.position = 'fixed'
-    gameCanvas.style.margin = 'auto'
-    gameCanvas.style.top = '0'
-    gameCanvas.style.bottom = '0'
-    gameCanvas.style.left = '0'
-    gameCanvas.style.right = '0'
-    var resizeCb = function(){
-      var scale = gameCanvasScale = Math.min(document.documentElement.clientWidth / 1920, document.documentElement.clientHeight / 1080)
-      gameCanvas.style.transform = 'scale(' + scale + ',' + scale + ')'
-    }
-    resizeCb()
-    window.onresize = resizeCb
-    var stage = game.init(gameCanvas)
-    gameCanvas.addEventListener('click', (e) => {
-      const {top, left} = gameCanvas.getBoundingClientRect()
-      const x = (e.clientX - left) / gameCanvasScale
-      const y = (e.clientY - top) / gameCanvasScale
-      stage.getRootContainer().emit({x, y}, 'click', e)
-    })
+    (function(){
+      var gameCanvas = document.getElementById('game')
+      var gameCanvasScale = 1
+      var isVertical = false
+      if (document.documentElement.clientWidth < document.documentElement.clientHeight) {
+        gameCanvas.width = 1080
+        gameCanvas.height = 1920
+        isVertical = true
+      }
+
+      var resizeCb = function(){
+        var w = document.documentElement.clientWidth
+        var h = document.documentElement.clientHeight
+        var scale = 1
+        var x = 0
+        var y = 0
+        if (isVertical) {
+          scale = gameCanvasScale = Math.min(w / 1080, h / 1920)
+          x = Math.floor((w - 1080) / 2)
+          y = Math.floor((h - 1920) / 2)
+        } else {
+          scale = gameCanvasScale = Math.min(w / 1920, h / 1080)
+          x = Math.floor((w - 1920) / 2)
+          y = Math.floor((h - 1080) / 2)
+        }
+        gameCanvas.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ',' + scale + ')'
+      }
+      resizeCb()
+      window.onresize = resizeCb
+
+      var stage = game.init(gameCanvas, isVertical)
+      gameCanvas.addEventListener('click', (e) => {
+        const {top, left} = gameCanvas.getBoundingClientRect()
+        const x = (e.clientX - left) / gameCanvasScale
+        const y = (e.clientY - top) / gameCanvasScale
+        stage.getRootContainer().emit({x, y}, 'click', e)
+      })
+    })()
   </script>
 </body>
 </html>

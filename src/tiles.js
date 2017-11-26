@@ -2,12 +2,21 @@ import {
   COLOR_R_ARR,
   COLOR_G_ARR,
   COLOR_B_ARR,
+  COLOR_BG_ARR,
   R,
   G,
   B,
   MAP_LETTER_NUM_MAP,
 } from './consts'
-import LEVEL_1 from './levels/1'
+import {
+  createButton,
+  activateButton,
+  deactivateButton,
+  flashButton,
+  unflashButton,
+} from './buttons'
+import { createTexts } from './texts'
+import { animateObj } from './animate'
 
 const M_N_MAX = 5
 const TILE_SIZE = 150
@@ -24,30 +33,6 @@ const toPixelPos = (m, n, alpha) => {
   }
 }
 
-const animateObj = (obj, toPos, length, cb) => {
-  const fromX = obj.x
-  const fromY = obj.y
-  const fromAlpha = obj.alpha
-  const toX = toPos.x
-  const toY = toPos.y
-  const toAlpha = toPos.alpha
-  const endTime = Date.now() + length
-  const updateFunc = () => {
-    const time = Date.now()
-    const timeLeft = endTime - time > 0 ? endTime - time : 0
-    const ratio = 1 - Math.sqrt(1 - timeLeft / length)
-    const x = toX - ratio * (toX - fromX)
-    const y = toY - ratio * (toY - fromY)
-    const alpha = toAlpha - ratio * (toAlpha - fromAlpha)
-    obj.x = x
-    obj.y = y
-    obj.alpha = alpha
-    if (timeLeft) requestAnimationFrame(updateFunc)
-    else if (cb) return cb()
-  }
-  requestAnimationFrame(updateFunc)
-}
-
 const parseLevelStr = (str) => {
   const signs = str.match(/[-rgbycpw]/g)
   const map = []
@@ -61,21 +46,38 @@ const parseLevelStr = (str) => {
   return map
 }
 
-export default function(stage, tilesContainer) {
+/* eslint-disable no-use-before-define */
+
+export default function(stage, mainContainer) {
   // game states
   let userClickEnabled = false
   let userColor = R | G | B
   let map = null
-  let tutorial = null
+  let steps = []
+  let startTime = 0
+  let timeTobj = null
+  let currentTutorialStep = null
+  let tutorialSteps = null
+  let levelEndCb = null
 
   // base containers
+  const tilesContainer = stage.createContainer()
+  mainContainer.append(tilesContainer)
   tilesContainer.pos(1920 - 1080 + TILE_AREA_MARGIN, TILE_AREA_MARGIN)
   const bgContainer = stage.createContainer()
-  tilesContainer.append(bgContainer)
   const fgContainer = stage.createContainer()
-  tilesContainer.append(fgContainer)
   const animateContainer = stage.createContainer()
-  tilesContainer.append(animateContainer)
+  const tutorialContainer = stage.createContainer()
+  tilesContainer.append(tutorialContainer).append(bgContainer).append(fgContainer).append(animateContainer)
+
+  // meta containers
+  const metaContainer = stage.createContainer()
+  mainContainer.append(metaContainer)
+  metaContainer.pos(TILE_AREA_MARGIN, TILE_AREA_MARGIN)
+  const colorHintContainer = stage.createContainer(0, 1080 - TILE_AREA_MARGIN * 2 - 200)
+  const levelInfoContainer = stage.createContainer(0,40)
+  const userColorSelectContainer = stage.createContainer(0, 1080 - TILE_AREA_MARGIN * 2)
+  metaContainer.append(colorHintContainer).append(levelInfoContainer).append(userColorSelectContainer)
 
   // add background tiles
   const drawBackground = () => {
@@ -83,10 +85,9 @@ export default function(stage, tilesContainer) {
       // eslint-disable-next-line no-loop-func
       for(let i = 0; i < M_N_MAX; i++) ((i, j) => {
         const {x, y} = toPixelPos(i, j)
-        const tile = stage.createRect(x, y, TILE_SIZE, TILE_SIZE).color(0.1, 0.1, 0.1, 1)
+        const tile = stage.createRect(x, y, TILE_SIZE, TILE_SIZE).color(...COLOR_BG_ARR)
         bgContainer.append(tile)
         tile.bind('click', () => {
-          // eslint-disable-next-line no-use-before-define
           handleUserClick(i, j)
         })
       })(i, j)
@@ -94,7 +95,7 @@ export default function(stage, tilesContainer) {
   }
   drawBackground()
 
-  // refresh foreground tiles
+  // draw foreground tiles
   const initTileContainers = () => {
     for(let j = 0; j < M_N_MAX; j++) {
       for(let i = 0; i < M_N_MAX; i++) {
@@ -128,6 +129,101 @@ export default function(stage, tilesContainer) {
         }
       }
     }
+  }
+
+  // show user color status
+  let colorSelectButtons = []
+  let colorHints = {}
+  const resetMetaContainer = () => {
+    colorSelectButtons = []
+    colorHintContainer.clear()
+    levelInfoContainer.clear()
+    userColorSelectContainer.clear()
+  }
+  const showTitle = (titleText, maxColor) => {
+    const TITLE_SIZE = 100
+    const TIME_SIZE = 40
+    const TITLE_COLOR_ARR = [0.5, 0.5, 0.5, 1]
+    const titleContainer = createTexts(stage, titleText, TITLE_SIZE, TITLE_COLOR_ARR)
+    const timeContainer = stage.createContainer(0, TITLE_SIZE + 20)
+    levelInfoContainer.append(titleContainer).append(timeContainer)
+    timeTobj = setInterval(() => {
+      const timeDiff = Math.floor((Date.now() - startTime) / 1000)
+      const minuteStr = (timeDiff < 600 ? '0' : '') + Math.floor(timeDiff / 60)
+      const secondStr = ':' + String(timeDiff % 60 + 100).slice(1)
+      timeContainer.clear()
+      timeContainer.append(createTexts(stage, minuteStr + secondStr, TIME_SIZE, TITLE_COLOR_ARR))
+    }, 1000)
+  }
+  const showMapInfo = (str) => {
+    const mapInfoContainer = createTexts(stage, str, 30, [0.3, 0.3, 0.3, 1]).pos(0, -60)
+    levelInfoContainer.append(mapInfoContainer)
+  }
+  const refreshColorSelectButtons = () => {
+    colorSelectButtons.forEach((btn) => {
+      if (userColor === btn.userColor) activateButton(btn)
+      else deactivateButton(btn)
+    })
+    colorHintContainer.clear()
+    if (colorHints[userColor]) colorHintContainer.append(colorHints[userColor])
+  }
+  const drawColorHint = (maxColor) => {
+    const SIZE = 60
+    const INTERVAL = 2.25 * 60
+    const INITIAL_X = 22.5
+    let y = 0
+    ;[R|G, R|B, G|B, R|G|B].forEach((c) => {
+      if (maxColor & c) {
+        const rowOffset = -10
+        const container = stage.createContainer(rowOffset, 0)
+        const text = createTexts(stage, c === (R|G|B) ? '  +  +  =' : '  +  =', SIZE, [0.5, 0.5, 0.5, 1])
+        container.append(text.pos(0, y))
+        let x = INITIAL_X
+        let endX = INITIAL_X + INTERVAL * (c === (R|G|B) ? 3 : 2)
+        if (c & R) {
+          container.append(stage.createRect(x, y, SIZE, SIZE).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE'))
+          container.append(stage.createRect(endX, y, SIZE, SIZE).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE'))
+          x += INTERVAL
+        }
+        if (c & G) {
+          container.append(stage.createRect(x, y, SIZE, SIZE).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE'))
+          container.append(stage.createRect(endX, y, SIZE, SIZE).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE'))
+          x += INTERVAL
+        }
+        if (c & B) {
+          container.append(stage.createRect(x, y, SIZE, SIZE).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE'))
+          container.append(stage.createRect(endX, y, SIZE, SIZE).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE'))
+          x += INTERVAL
+        }
+        colorHints[c] = container
+      }
+    })
+  }
+  const drawUserColorSelect = (maxColor) => {
+    const SPACING = 30
+    const BORDER_SIZE = 10
+    const SIZE = 60
+    let x = 0
+    let y = -BORDER_SIZE * 2 - SIZE
+    const btns = colorSelectButtons = []
+    // eslint-disable-next-line no-loop-func
+    ;[R, G, B, R|G, R|B, G|B, R|G|B].forEach((c, index) => {
+      if ((maxColor & c) === c) {
+        const btn = createButton(stage, SIZE, SIZE, BORDER_SIZE, () => {
+          if (currentTutorialStep && (currentTutorialStep[0] !== -1 || currentTutorialStep[1] !== index)) return
+          userColor = c
+          refreshColorSelectButtons()
+          acceptUserClick()
+        }).pos(x + BORDER_SIZE, y + BORDER_SIZE)
+        btn.userColor = c
+        btns.push(btn)
+        userColorSelectContainer.append(btn)
+        if (c & R) userColorSelectContainer.append(stage.createRect(x + BORDER_SIZE, y + BORDER_SIZE, SIZE, SIZE).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE'))
+        if (c & G) userColorSelectContainer.append(stage.createRect(x + BORDER_SIZE, y + BORDER_SIZE, SIZE, SIZE).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE'))
+        if (c & B) userColorSelectContainer.append(stage.createRect(x + BORDER_SIZE, y + BORDER_SIZE, SIZE, SIZE).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE'))
+        x += BORDER_SIZE * 2 + SIZE + SPACING
+      }
+    })
   }
 
   // controllers
@@ -194,7 +290,8 @@ export default function(stage, tilesContainer) {
       requestAnimationFrame(() => {
         animateContainer.clear()
         refreshTiles()
-        userClickEnabled = true
+        acceptUserClick()
+        if (checkLevelEnd()) return
       })
     })
   }
@@ -226,7 +323,8 @@ export default function(stage, tilesContainer) {
       requestAnimationFrame(() => {
         animateContainer.clear()
         refreshTiles()
-        userClickEnabled = true
+        acceptUserClick()
+        if (checkLevelEnd()) return
       })
     })
   }
@@ -234,9 +332,17 @@ export default function(stage, tilesContainer) {
   // user click handler
   const handleUserClick = (m, n) => {
     if (!userClickEnabled) return
+    if (currentTutorialStep && (currentTutorialStep[0] !== m || currentTutorialStep[1] !== n)) return
     const num = map[n][m]
+    steps.push({
+      m,
+      n,
+      from: num,
+      to: num ? 0 : userColor
+    })
     if (num) {
       userColor = num
+      refreshColorSelectButtons()
       if (num & R) eraseColor(m, n, R)
       if (num & G) eraseColor(m, n, G)
       if (num & B) eraseColor(m, n, B)
@@ -246,14 +352,95 @@ export default function(stage, tilesContainer) {
       if (userColor & B) addColor(m, n, B)
     }
   }
+  const acceptUserClick = () => {
+    userClickEnabled = true
+    if (currentTutorialStep) {
+      if (currentTutorialStep[0] === -1) {
+        const btn = colorSelectButtons[currentTutorialStep[1]]
+        unflashButton(btn)
+      } else {
+        tutorialContainer.clear()
+      }
+    }
+    currentTutorialStep = tutorialSteps.shift()
+    if (currentTutorialStep) {
+      if (currentTutorialStep[0] === -1) {
+        const btn = colorSelectButtons[currentTutorialStep[1]]
+        flashButton(btn)
+      } else {
+        const pos = toPixelPos(currentTutorialStep[0], currentTutorialStep[1])
+        const btn = createButton(stage, TILE_SIZE, TILE_SIZE, 20, () => {
+          unflashButton(btn)
+          activateButton(btn)
+        }).pos(pos.x, pos.y)
+        tutorialContainer.append(btn)
+        flashButton(btn)
+      }
+    }
+  }
 
   // load map and start
-  const loadLevel = (level) => {
-    tutorial = level.tutorial || null
-    userColor = MAP_LETTER_NUM_MAP[level.userColor]
-    map = parseLevelStr(level.map)
+  const loadLevel = (level, cb) => {
+    // load level data
+    levelEndCb = cb
+    tutorialSteps = level.tutorialSteps || []
+    currentTutorialStep = null
+    map = level.map || parseLevelStr(level.mapStr)
+    // reset ui
+    resetMetaContainer()
     refreshTiles()
-    userClickEnabled = true
+    // stat used colors
+    let hasR = false
+    let hasG = false
+    let hasB = false
+    for(let j = 0; j < M_N_MAX; j++) {
+      for(let i = 0; i < M_N_MAX; i++) {
+        const num = map[j][i]
+        if (num & R) hasR = true
+        if (num & G) hasG = true
+        if (num & B) hasB = true
+      }
+    }
+    const maxColor = (hasR ? R : 0) | (hasG ? G : 0) | (hasB ? B : 0)
+    userColor = MAP_LETTER_NUM_MAP[level.userColor] || maxColor
+    if (maxColor > B) {
+      drawColorHint(maxColor)
+      drawUserColorSelect(maxColor)
+      refreshColorSelectButtons()
+    }
+    // show title
+    startTime = Date.now() - (level.timeUsed || 0)
+    showTitle(level.title, maxColor)
+    if (level.difficulty) showMapInfo('SEED:' + level.seed + ' D:' + level.difficulty)
+    acceptUserClick()
   }
-  loadLevel(LEVEL_1)
+  const checkLevelEnd = () => {
+    let status = -1
+    for(let j = 0; j < M_N_MAX; j++) {
+      for(let i = 0; i < M_N_MAX; i++) {
+        const num = map[j][i]
+        if (status < 0) status = num
+        else if (status !== num) return false
+      }
+    }
+    endLevel()
+    return true
+  }
+  const endLevel = () => {
+    clearInterval(timeTobj)
+    levelEndCb({
+      timeUsed: Date.now() - startTime
+    })
+  }
+
+  return {
+    loadLevel,
+    changeOrientation: (isVertical) => {
+      if (isVertical) {
+        tilesContainer.pos(TILE_AREA_MARGIN, (1920 - 1080) / 2 + TILE_AREA_MARGIN)
+        colorHintContainer.pos(0, 1920 - TILE_AREA_MARGIN * 2 - 200)
+        userColorSelectContainer.pos(0, 1920 - TILE_AREA_MARGIN * 2)
+      }
+    }
+  }
 }

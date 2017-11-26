@@ -11,6 +11,11 @@ const transformColorStr = (colorStr) => {
 export const COLOR_R_ARR = transformColorStr(COLOR_R)
 export const COLOR_G_ARR = transformColorStr(COLOR_G)
 export const COLOR_B_ARR = transformColorStr(COLOR_B)
+export const COLOR_BG_ARR = [0.1, 0.1, 0.1, 1]
+
+export const COLOR_BTN_NORMAL_ARR = [0.2, 0.2, 0.2, 1]
+export const COLOR_BTN_ACTIVE_ARR = [0.6, 0.6, 0.6, 1]
+export const COLOR_BTN_FLASH_ARR = [0.7, 0.7, 0.7, 1]
 
 export const R = 1
 export const G = 2
