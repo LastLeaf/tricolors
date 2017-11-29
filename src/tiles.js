@@ -403,7 +403,7 @@ export default function(stage, mainContainer) {
     }
     const maxColor = (hasR ? R : 0) | (hasG ? G : 0) | (hasB ? B : 0)
     userColor = MAP_LETTER_NUM_MAP[level.userColor] || maxColor
-    if (maxColor > B) {
+    if (maxColor !== R && maxColor !== G && maxColor !== B) {
       drawColorHint(maxColor)
       drawUserColorSelect(maxColor)
       refreshColorSelectButtons()
