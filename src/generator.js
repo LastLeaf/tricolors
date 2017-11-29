@@ -4,21 +4,31 @@ import {
   B,
 } from './consts'
 
-const D_PER_LEVEL = 80
-const D_COLOR_COUNT = [0, 2, 3, 4]
-const D_STEP_BATCH = [0, 4, 3, 0, 2]
+const D_PER_LEVEL = 300
+const D_COLOR_COUNT = [0, 3, 5, 7] // the multiplier for how many base colors used in the map
+const D_STEP_BATCH = [0, 8, 5, 0, 3] // the multiplier for how many steps are in a batch (because of symmetry)
+const D_STEP_SAME_POINT = [4, 3, 2] // the multiplier for how many colors has been set in this point
 
-const P_SYMMETRY_NONE = 0.1
+const P_SYMMETRY_NONE = 0
 const P_SYMMETRY_H = 0.3
 const P_SYMMETRY_V = 0.5
 const P_SYMMETRY_ROTATE = 0.7
 const P_SYMMETRY_ALL = 0.9
 const P_SYMMETRY_ALL_ROTATE = 1
 
+const P_SYMMETRY_NONE_INC = 0.02 / D_PER_LEVEL
+const P_SYMMETRY_H_INC = 0.01 / D_PER_LEVEL
+const P_SYMMETRY_V_INC = 0.005 / D_PER_LEVEL
+const P_SYMMETRY_ROTATE_INC = 0.01 / D_PER_LEVEL
+const P_SYMMETRY_ALL_INC = 0.001 / D_PER_LEVEL
+const P_SYMMETRY_ALL_ROTATE_INC = 0
+
+const SYMMETRY_INC_LEVELS = 16
+
 const P_2_COLOR_D_MIN = D_PER_LEVEL * 2
 const P_3_COLOR_D_MIN = D_PER_LEVEL * 4
-const P_2_COLOR_D_INC = D_PER_LEVEL / 5
-const P_3_COLOR_D_INC = D_PER_LEVEL / 10
+const P_2_COLOR_D_INC = 0.2 / D_PER_LEVEL
+const P_3_COLOR_D_INC = 0.1 / D_PER_LEVEL
 
 const SYMMETRY_NONE = 0
 const SYMMETRY_H = 1
@@ -69,17 +79,18 @@ export const endless = ({level, timeUsed}) => {
   // generate symmetry type
   const symmetryRand = getRandom(10) / 10
   let symmetryType = 0
-  if (symmetryRand < P_SYMMETRY_NONE) {
+  const symmetryIncLevels = Math.min(level, SYMMETRY_INC_LEVELS)
+  if (symmetryRand < P_SYMMETRY_NONE + symmetryIncLevels * P_SYMMETRY_NONE_INC) {
     symmetryType = SYMMETRY_NONE
-  } else if (symmetryRand < P_SYMMETRY_H) {
+  } else if (symmetryRand < P_SYMMETRY_H + symmetryIncLevels * P_SYMMETRY_H_INC) {
     symmetryType = SYMMETRY_H
-  } else if (symmetryRand < P_SYMMETRY_V) {
+  } else if (symmetryRand < P_SYMMETRY_V + symmetryIncLevels * P_SYMMETRY_V_INC) {
     symmetryType = SYMMETRY_V
-  } else if (symmetryRand < P_SYMMETRY_ROTATE) {
+  } else if (symmetryRand < P_SYMMETRY_ROTATE + symmetryIncLevels * P_SYMMETRY_ROTATE_INC) {
     symmetryType = SYMMETRY_ROTATE
-  } else if (symmetryRand < P_SYMMETRY_ALL) {
+  } else if (symmetryRand < P_SYMMETRY_ALL + symmetryIncLevels * P_SYMMETRY_ALL_INC) {
     symmetryType = SYMMETRY_ALL
-  } else if (symmetryRand < P_SYMMETRY_ALL_ROTATE) {
+  } else if (symmetryRand < P_SYMMETRY_ALL_ROTATE + symmetryIncLevels * P_SYMMETRY_ALL_ROTATE_INC) {
     symmetryType = SYMMETRY_ALL_ROTATE
   }
 
@@ -106,8 +117,21 @@ export const endless = ({level, timeUsed}) => {
   // eslint-disable-next-line complexity
   const nextStep = () => {
     const stepColor = colors[getRandom(colorType)]
-    const stepM = getRandom(5)
-    const stepN = getRandom(5)
+
+    // stat available positions
+    const availablePos = []
+    for(let j = 0; j < 5; j++) {
+      for(let i = 0; i < 5; i++) {
+        if (colorMap[j][i] & stepColor) continue
+        availablePos.push([i, j])
+      }
+    }
+    if (!availablePos.length) return 0
+    const [stepM, stepN] = availablePos[getRandom(availablePos.length)]
+    let stepSamePoint = 0
+    if (colorMap[stepN][stepM] & R) stepSamePoint++
+    if (colorMap[stepN][stepM] & G) stepSamePoint++
+    if (colorMap[stepN][stepM] & B) stepSamePoint++
 
     // init maps
     const signMap = []
@@ -164,7 +188,7 @@ export const endless = ({level, timeUsed}) => {
     }
 
     // check and write to map
-    stepD *= D_COLOR_COUNT[colorType] * D_STEP_BATCH[stepCount]
+    stepD *= D_COLOR_COUNT[colorType] * D_STEP_BATCH[stepCount] * D_STEP_SAME_POINT[stepSamePoint]
     if (stepD + currentD <= difficulty || currentD === 0) {
       console.info([stepM, stepN, stepColor]) // FIXME step is shown in console
       for(let j = 0; j < 5; j++) {
