@@ -61,7 +61,7 @@ var game =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -74,31 +74,265 @@ var game =
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+var COLOR_R = '#e75885';
+var COLOR_G = '#2f9134';
+var COLOR_B = '#228eda';
+
+var transformColorStr = function transformColorStr(colorStr) {
+  var r = parseInt(colorStr.slice(1, 3), 16) / 255;
+  var g = parseInt(colorStr.slice(3, 5), 16) / 255;
+  var b = parseInt(colorStr.slice(5, 7), 16) / 255;
+  return [r, g, b, 0.7];
+};
+var COLOR_R_ARR = exports.COLOR_R_ARR = transformColorStr(COLOR_R);
+var COLOR_G_ARR = exports.COLOR_G_ARR = transformColorStr(COLOR_G);
+var COLOR_B_ARR = exports.COLOR_B_ARR = transformColorStr(COLOR_B);
+var COLOR_BG_ARR = exports.COLOR_BG_ARR = [0.1, 0.1, 0.1, 1];
+
+var COLOR_BTN_NORMAL_ARR = exports.COLOR_BTN_NORMAL_ARR = [0.2, 0.2, 0.2, 1];
+var COLOR_BTN_ACTIVE_ARR = exports.COLOR_BTN_ACTIVE_ARR = [0.6, 0.6, 0.6, 1];
+var COLOR_BTN_FLASH_ARR = exports.COLOR_BTN_FLASH_ARR = [0.7, 0.7, 0.7, 1];
+
+var R = exports.R = 1;
+var G = exports.G = 2;
+var B = exports.B = 4;
+
+var MAP_LETTER_NUM_MAP = exports.MAP_LETTER_NUM_MAP = {
+  '-': 0,
+  r: R,
+  g: G,
+  b: B,
+  y: R | G,
+  c: G | B,
+  p: R | B,
+  w: R | G | B
+};
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.unflashButton = exports.flashButton = exports.deactivateButton = exports.activateButton = exports.createButton = undefined;
+
+var _consts = __webpack_require__(0);
+
+var _animate = __webpack_require__(2);
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var FLASH_ANIMATION_LENGTH = 1000;
+
+var createButton = exports.createButton = function createButton(stage, w, h, margin, cb) {
+  var _stage$createRect, _stage$createRect2;
+
+  var container = stage.createContainer();
+  container.append((_stage$createRect = stage.createRect(-margin, -margin, w + margin * 2, h + margin * 2)).color.apply(_stage$createRect, _toConsumableArray(_consts.COLOR_BTN_NORMAL_ARR)).bind('click', cb || function () {/* empty */}));
+  container.append((_stage$createRect2 = stage.createRect(0, 0, w, h)).color.apply(_stage$createRect2, _toConsumableArray(_consts.COLOR_BG_ARR)));
+  return container;
+};
+var activateButton = exports.activateButton = function activateButton(container) {
+  var _container$index;
+
+  (_container$index = container.index(0)).color.apply(_container$index, _toConsumableArray(_consts.COLOR_BTN_ACTIVE_ARR));
+};
+var deactivateButton = exports.deactivateButton = function deactivateButton(container) {
+  var _container$index2;
+
+  (_container$index2 = container.index(0)).color.apply(_container$index2, _toConsumableArray(_consts.COLOR_BTN_NORMAL_ARR));
+};
+var flashButton = exports.flashButton = function flashButton(container) {
+  var _container$index3;
+
+  if (container.buttonFlashing) return;
+  container.buttonFlashing = true;
+  var btn = (_container$index3 = container.index(0)).color.apply(_container$index3, _toConsumableArray(_consts.COLOR_BTN_FLASH_ARR)).setAlpha(0);
+  var curAlpha = 0;
+  var flash = function flash() {
+    if (!container.buttonFlashing) return;
+    curAlpha = 1 - curAlpha;
+    (0, _animate.animateObj)(btn, {
+      x: btn.x,
+      y: btn.y,
+      alpha: curAlpha
+    }, FLASH_ANIMATION_LENGTH, flash);
+  };
+  flash();
+};
+var unflashButton = exports.unflashButton = function unflashButton(container) {
+  var _container$index4;
+
+  container.buttonFlashing = false;
+  (_container$index4 = container.index(0)).color.apply(_container$index4, _toConsumableArray(_consts.COLOR_BTN_NORMAL_ARR));
+};
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var animateObj = exports.animateObj = function animateObj(obj, toPos, length, cb) {
+  var fromX = obj.x;
+  var fromY = obj.y;
+  var fromAlpha = obj.alpha;
+  var toX = toPos.x;
+  var toY = toPos.y;
+  var toAlpha = toPos.alpha;
+  var endTime = Date.now() + length;
+  var updateFunc = function updateFunc() {
+    var time = Date.now();
+    var timeLeft = endTime - time > 0 ? endTime - time : 0;
+    var ratio = 1 - Math.sqrt(1 - timeLeft / length);
+    var x = toX - ratio * (toX - fromX);
+    var y = toY - ratio * (toY - fromY);
+    var alpha = toAlpha - ratio * (toAlpha - fromAlpha);
+    obj.x = x;
+    obj.y = y;
+    obj.alpha = alpha;
+    if (timeLeft) requestAnimationFrame(updateFunc);else if (cb) return cb();
+  };
+  requestAnimationFrame(updateFunc);
+};
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createTexts = undefined;
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _letters = __webpack_require__(9);
+
+var _letters2 = _interopRequireDefault(_letters);
+
+var _numbers = __webpack_require__(10);
+
+var _numbers2 = _interopRequireDefault(_numbers);
+
+var _symbols = __webpack_require__(11);
+
+var _symbols2 = _interopRequireDefault(_symbols);
+
+var _special = __webpack_require__(12);
+
+var _special2 = _interopRequireDefault(_special);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var dotsPositions = Object.create(null);
+var dotsInfo = Object.create(null);
+
+var prepareFonts = function prepareFonts(letter, dotStr) {
+  var lines = dotStr.split('\n');
+  while (lines[0].indexOf('[') < 0) {
+    lines.shift();
+  }var left = lines[0].indexOf('[');
+  var right = lines[0].indexOf(']') + 1;
+  var infoArr = JSON.parse(lines[0].slice(left, right));
+  var info = { width: infoArr[0], height: infoArr[1] };
+  var n = 0;
+  var arr = [];
+  for (lines.shift(); lines.length; lines.shift(), n++) {
+    var lineContent = lines[0].slice(left, left + info.width);
+    for (var m = 0; m < lineContent.length; m++) {
+      if (lineContent[m] === '+') {
+        arr.push([m, n]);
+      }
+    }
+  }
+  dotsPositions[letter] = arr;
+  dotsInfo[letter] = info;
+};
+for (var k in _letters2.default) {
+  prepareFonts(k, _letters2.default[k]);
+}for (var _k in _numbers2.default) {
+  prepareFonts(_k, _numbers2.default[_k]);
+}for (var _k2 in _symbols2.default) {
+  prepareFonts(_k2, _symbols2.default[_k2]);
+}for (var _k3 in _special2.default) {
+  prepareFonts(_k3, _special2.default[_k3]);
+}var createTexts = exports.createTexts = function createTexts(stage, str, size, color) {
+  var container = stage.createContainer();
+  var x = 0;
+
+  var _loop = function _loop(i) {
+    var dotsPosArr = dotsPositions[str[i]];
+    var info = dotsInfo[str[i]];
+    var dotSize = size / info.height;
+    // eslint-disable-next-line no-loop-func
+    dotsPosArr.forEach(function (_ref) {
+      var _stage$createRect;
+
+      var _ref2 = _slicedToArray(_ref, 2),
+          m = _ref2[0],
+          n = _ref2[1];
+
+      var rect = (_stage$createRect = stage.createRect(m * dotSize + x, n * dotSize, dotSize, dotSize)).color.apply(_stage$createRect, _toConsumableArray(color));
+      container.append(rect);
+    });
+    x += dotSize * info.width;
+  };
+
+  for (var i = 0; i < str.length; i++) {
+    _loop(i);
+  }
+  return container;
+};
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.init = exports.changeOrientation = undefined;
 
-var _simpleGl = __webpack_require__(1);
+var _simpleGl = __webpack_require__(5);
 
-var _tiles = __webpack_require__(4);
+var _tiles = __webpack_require__(8);
 
 var _tiles2 = _interopRequireDefault(_tiles);
 
-var _cover = __webpack_require__(12);
+var _cover = __webpack_require__(13);
 
 var _cover2 = _interopRequireDefault(_cover);
 
-var _tutorial = __webpack_require__(15);
+var _tutorial = __webpack_require__(14);
 
 var _tutorial2 = _interopRequireDefault(_tutorial);
 
-var _tutorial3 = __webpack_require__(16);
+var _tutorial3 = __webpack_require__(15);
 
 var _tutorial4 = _interopRequireDefault(_tutorial3);
 
-var _tutorial5 = __webpack_require__(17);
+var _tutorial5 = __webpack_require__(16);
 
 var _tutorial6 = _interopRequireDefault(_tutorial5);
 
-var _generator = __webpack_require__(18);
+var _generator = __webpack_require__(17);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -162,7 +396,7 @@ var init = exports.init = function init(canvas, isVertical) {
 };
 
 /***/ }),
-/* 1 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -180,8 +414,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var rectVs = __webpack_require__(2);
-var rectFs = __webpack_require__(3);
+var rectVs = __webpack_require__(6);
+var rectFs = __webpack_require__(7);
 
 var createVertexShader = function createVertexShader(gl, src) {
   var shaderLog = '';
@@ -644,19 +878,19 @@ var SimpleGL = exports.SimpleGL = function () {
 }();
 
 /***/ }),
-/* 2 */
+/* 6 */
 /***/ (function(module, exports) {
 
 module.exports = "attribute vec2 aPoint;\r\nuniform vec2 uCanvasSize;\r\n\r\nvoid main(void) {\r\n  gl_Position = vec4(aPoint * mat2( 2.0/uCanvasSize.x,0, 0,-2.0/uCanvasSize.y ) + vec2(-1, 1), 0, 1);\r\n}\r\n"
 
 /***/ }),
-/* 3 */
+/* 7 */
 /***/ (function(module, exports) {
 
 module.exports = "uniform highp vec4 uColor;\r\n\r\nvoid main(void) {\r\n  gl_FragColor = uColor;\r\n}\r\n"
 
 /***/ }),
-/* 4 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1041,7 +1275,7 @@ exports.default = function (stage, mainContainer) {
     }
     var maxColor = (hasR ? _consts.R : 0) | (hasG ? _consts.G : 0) | (hasB ? _consts.B : 0);
     userColor = _consts.MAP_LETTER_NUM_MAP[level.userColor] || maxColor;
-    if (maxColor > _consts.B) {
+    if (maxColor !== _consts.R && maxColor !== _consts.G && maxColor !== _consts.B) {
       drawColorHint(maxColor);
       drawUserColorSelect(maxColor);
       refreshColorSelectButtons();
@@ -1082,13 +1316,13 @@ exports.default = function (stage, mainContainer) {
   };
 };
 
-var _consts = __webpack_require__(5);
+var _consts = __webpack_require__(0);
 
-var _buttons = __webpack_require__(14);
+var _buttons = __webpack_require__(1);
 
-var _texts = __webpack_require__(7);
+var _texts = __webpack_require__(3);
 
-var _animate = __webpack_require__(13);
+var _animate = __webpack_require__(2);
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -1125,146 +1359,7 @@ var parseLevelStr = function parseLevelStr(str) {
 /* eslint-disable no-use-before-define */
 
 /***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var COLOR_R = '#e75885';
-var COLOR_G = '#2f9134';
-var COLOR_B = '#228eda';
-
-var transformColorStr = function transformColorStr(colorStr) {
-  var r = parseInt(colorStr.slice(1, 3), 16) / 255;
-  var g = parseInt(colorStr.slice(3, 5), 16) / 255;
-  var b = parseInt(colorStr.slice(5, 7), 16) / 255;
-  return [r, g, b, 0.7];
-};
-var COLOR_R_ARR = exports.COLOR_R_ARR = transformColorStr(COLOR_R);
-var COLOR_G_ARR = exports.COLOR_G_ARR = transformColorStr(COLOR_G);
-var COLOR_B_ARR = exports.COLOR_B_ARR = transformColorStr(COLOR_B);
-var COLOR_BG_ARR = exports.COLOR_BG_ARR = [0.1, 0.1, 0.1, 1];
-
-var COLOR_BTN_NORMAL_ARR = exports.COLOR_BTN_NORMAL_ARR = [0.2, 0.2, 0.2, 1];
-var COLOR_BTN_ACTIVE_ARR = exports.COLOR_BTN_ACTIVE_ARR = [0.6, 0.6, 0.6, 1];
-var COLOR_BTN_FLASH_ARR = exports.COLOR_BTN_FLASH_ARR = [0.7, 0.7, 0.7, 1];
-
-var R = exports.R = 1;
-var G = exports.G = 2;
-var B = exports.B = 4;
-
-var MAP_LETTER_NUM_MAP = exports.MAP_LETTER_NUM_MAP = {
-  '-': 0,
-  r: R,
-  g: G,
-  b: B,
-  y: R | G,
-  c: G | B,
-  p: R | B,
-  w: R | G | B
-};
-
-/***/ }),
-/* 6 */,
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.createTexts = undefined;
-
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
-var _letters = __webpack_require__(8);
-
-var _letters2 = _interopRequireDefault(_letters);
-
-var _numbers = __webpack_require__(9);
-
-var _numbers2 = _interopRequireDefault(_numbers);
-
-var _symbols = __webpack_require__(10);
-
-var _symbols2 = _interopRequireDefault(_symbols);
-
-var _special = __webpack_require__(11);
-
-var _special2 = _interopRequireDefault(_special);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-var dotsPositions = Object.create(null);
-var dotsInfo = Object.create(null);
-
-var prepareFonts = function prepareFonts(letter, dotStr) {
-  var lines = dotStr.split('\n');
-  while (lines[0].indexOf('[') < 0) {
-    lines.shift();
-  }var left = lines[0].indexOf('[');
-  var right = lines[0].indexOf(']') + 1;
-  var infoArr = JSON.parse(lines[0].slice(left, right));
-  var info = { width: infoArr[0], height: infoArr[1] };
-  var n = 0;
-  var arr = [];
-  for (lines.shift(); lines.length; lines.shift(), n++) {
-    var lineContent = lines[0].slice(left, left + info.width);
-    for (var m = 0; m < lineContent.length; m++) {
-      if (lineContent[m] === '+') {
-        arr.push([m, n]);
-      }
-    }
-  }
-  dotsPositions[letter] = arr;
-  dotsInfo[letter] = info;
-};
-for (var k in _letters2.default) {
-  prepareFonts(k, _letters2.default[k]);
-}for (var _k in _numbers2.default) {
-  prepareFonts(_k, _numbers2.default[_k]);
-}for (var _k2 in _symbols2.default) {
-  prepareFonts(_k2, _symbols2.default[_k2]);
-}for (var _k3 in _special2.default) {
-  prepareFonts(_k3, _special2.default[_k3]);
-}var createTexts = exports.createTexts = function createTexts(stage, str, size, color) {
-  var container = stage.createContainer();
-  var x = 0;
-
-  var _loop = function _loop(i) {
-    var dotsPosArr = dotsPositions[str[i]];
-    var info = dotsInfo[str[i]];
-    var dotSize = size / info.height;
-    // eslint-disable-next-line no-loop-func
-    dotsPosArr.forEach(function (_ref) {
-      var _stage$createRect;
-
-      var _ref2 = _slicedToArray(_ref, 2),
-          m = _ref2[0],
-          n = _ref2[1];
-
-      var rect = (_stage$createRect = stage.createRect(m * dotSize + x, n * dotSize, dotSize, dotSize)).color.apply(_stage$createRect, _toConsumableArray(color));
-      container.append(rect);
-    });
-    x += dotSize * info.width;
-  };
-
-  for (var i = 0; i < str.length; i++) {
-    _loop(i);
-  }
-  return container;
-};
-
-/***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1306,7 +1401,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1329,7 +1424,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1350,7 +1445,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1364,7 +1459,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1374,11 +1469,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _consts = __webpack_require__(5);
+var _consts = __webpack_require__(0);
 
-var _buttons = __webpack_require__(14);
+var _buttons = __webpack_require__(1);
 
-var _texts = __webpack_require__(7);
+var _texts = __webpack_require__(3);
 
 exports.default = function (stage, container) {
   var selectCb = null;
@@ -1433,103 +1528,7 @@ exports.default = function (stage, container) {
 };
 
 /***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var animateObj = exports.animateObj = function animateObj(obj, toPos, length, cb) {
-  var fromX = obj.x;
-  var fromY = obj.y;
-  var fromAlpha = obj.alpha;
-  var toX = toPos.x;
-  var toY = toPos.y;
-  var toAlpha = toPos.alpha;
-  var endTime = Date.now() + length;
-  var updateFunc = function updateFunc() {
-    var time = Date.now();
-    var timeLeft = endTime - time > 0 ? endTime - time : 0;
-    var ratio = 1 - Math.sqrt(1 - timeLeft / length);
-    var x = toX - ratio * (toX - fromX);
-    var y = toY - ratio * (toY - fromY);
-    var alpha = toAlpha - ratio * (toAlpha - fromAlpha);
-    obj.x = x;
-    obj.y = y;
-    obj.alpha = alpha;
-    if (timeLeft) requestAnimationFrame(updateFunc);else if (cb) return cb();
-  };
-  requestAnimationFrame(updateFunc);
-};
-
-/***/ }),
 /* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.unflashButton = exports.flashButton = exports.deactivateButton = exports.activateButton = exports.createButton = undefined;
-
-var _consts = __webpack_require__(5);
-
-var _animate = __webpack_require__(13);
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-var FLASH_ANIMATION_LENGTH = 1000;
-
-var createButton = exports.createButton = function createButton(stage, w, h, margin, cb) {
-  var _stage$createRect, _stage$createRect2;
-
-  var container = stage.createContainer();
-  container.append((_stage$createRect = stage.createRect(-margin, -margin, w + margin * 2, h + margin * 2)).color.apply(_stage$createRect, _toConsumableArray(_consts.COLOR_BTN_NORMAL_ARR)).bind('click', cb || function () {/* empty */}));
-  container.append((_stage$createRect2 = stage.createRect(0, 0, w, h)).color.apply(_stage$createRect2, _toConsumableArray(_consts.COLOR_BG_ARR)));
-  return container;
-};
-var activateButton = exports.activateButton = function activateButton(container) {
-  var _container$index;
-
-  (_container$index = container.index(0)).color.apply(_container$index, _toConsumableArray(_consts.COLOR_BTN_ACTIVE_ARR));
-};
-var deactivateButton = exports.deactivateButton = function deactivateButton(container) {
-  var _container$index2;
-
-  (_container$index2 = container.index(0)).color.apply(_container$index2, _toConsumableArray(_consts.COLOR_BTN_NORMAL_ARR));
-};
-var flashButton = exports.flashButton = function flashButton(container) {
-  var _container$index3;
-
-  if (container.buttonFlashing) return;
-  container.buttonFlashing = true;
-  var btn = (_container$index3 = container.index(0)).color.apply(_container$index3, _toConsumableArray(_consts.COLOR_BTN_FLASH_ARR)).setAlpha(0);
-  var curAlpha = 0;
-  var flash = function flash() {
-    if (!container.buttonFlashing) return;
-    curAlpha = 1 - curAlpha;
-    (0, _animate.animateObj)(btn, {
-      x: btn.x,
-      y: btn.y,
-      alpha: curAlpha
-    }, FLASH_ANIMATION_LENGTH, flash);
-  };
-  flash();
-};
-var unflashButton = exports.unflashButton = function unflashButton(container) {
-  var _container$index4;
-
-  container.buttonFlashing = false;
-  (_container$index4 = container.index(0)).color.apply(_container$index4, _toConsumableArray(_consts.COLOR_BTN_NORMAL_ARR));
-};
-
-/***/ }),
-/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1545,7 +1544,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1561,7 +1560,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1577,7 +1576,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1588,23 +1587,35 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.endless = undefined;
 
-var _consts = __webpack_require__(5);
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-var D_PER_LEVEL = 80;
-var D_COLOR_COUNT = [0, 2, 3, 4];
-var D_STEP_BATCH = [0, 4, 3, 0, 2];
+var _consts = __webpack_require__(0);
 
-var P_SYMMETRY_NONE = 0.1;
+var D_PER_LEVEL = 300;
+var D_COLOR_COUNT = [0, 3, 5, 7]; // the multiplier for how many base colors used in the map
+var D_STEP_BATCH = [0, 8, 5, 0, 3]; // the multiplier for how many steps are in a batch (because of symmetry)
+var D_STEP_SAME_POINT = [4, 3, 2]; // the multiplier for how many colors has been set in this point
+
+var P_SYMMETRY_NONE = 0;
 var P_SYMMETRY_H = 0.3;
 var P_SYMMETRY_V = 0.5;
 var P_SYMMETRY_ROTATE = 0.7;
 var P_SYMMETRY_ALL = 0.9;
 var P_SYMMETRY_ALL_ROTATE = 1;
 
+var P_SYMMETRY_NONE_INC = 0.02 / D_PER_LEVEL;
+var P_SYMMETRY_H_INC = 0.01 / D_PER_LEVEL;
+var P_SYMMETRY_V_INC = 0.005 / D_PER_LEVEL;
+var P_SYMMETRY_ROTATE_INC = 0.01 / D_PER_LEVEL;
+var P_SYMMETRY_ALL_INC = 0.001 / D_PER_LEVEL;
+var P_SYMMETRY_ALL_ROTATE_INC = 0;
+
+var SYMMETRY_INC_LEVELS = 16;
+
 var P_2_COLOR_D_MIN = D_PER_LEVEL * 2;
 var P_3_COLOR_D_MIN = D_PER_LEVEL * 4;
-var P_2_COLOR_D_INC = D_PER_LEVEL / 5;
-var P_3_COLOR_D_INC = D_PER_LEVEL / 10;
+var P_2_COLOR_D_INC = 0.2 / D_PER_LEVEL;
+var P_3_COLOR_D_INC = 0.1 / D_PER_LEVEL;
 
 var SYMMETRY_NONE = 0;
 var SYMMETRY_H = 1;
@@ -1658,17 +1669,18 @@ var endless = exports.endless = function endless(_ref) {
   // generate symmetry type
   var symmetryRand = getRandom(10) / 10;
   var symmetryType = 0;
-  if (symmetryRand < P_SYMMETRY_NONE) {
+  var symmetryIncLevels = Math.min(level, SYMMETRY_INC_LEVELS);
+  if (symmetryRand < P_SYMMETRY_NONE + symmetryIncLevels * P_SYMMETRY_NONE_INC) {
     symmetryType = SYMMETRY_NONE;
-  } else if (symmetryRand < P_SYMMETRY_H) {
+  } else if (symmetryRand < P_SYMMETRY_H + symmetryIncLevels * P_SYMMETRY_H_INC) {
     symmetryType = SYMMETRY_H;
-  } else if (symmetryRand < P_SYMMETRY_V) {
+  } else if (symmetryRand < P_SYMMETRY_V + symmetryIncLevels * P_SYMMETRY_V_INC) {
     symmetryType = SYMMETRY_V;
-  } else if (symmetryRand < P_SYMMETRY_ROTATE) {
+  } else if (symmetryRand < P_SYMMETRY_ROTATE + symmetryIncLevels * P_SYMMETRY_ROTATE_INC) {
     symmetryType = SYMMETRY_ROTATE;
-  } else if (symmetryRand < P_SYMMETRY_ALL) {
+  } else if (symmetryRand < P_SYMMETRY_ALL + symmetryIncLevels * P_SYMMETRY_ALL_INC) {
     symmetryType = SYMMETRY_ALL;
-  } else if (symmetryRand < P_SYMMETRY_ALL_ROTATE) {
+  } else if (symmetryRand < P_SYMMETRY_ALL_ROTATE + symmetryIncLevels * P_SYMMETRY_ALL_ROTATE_INC) {
     symmetryType = SYMMETRY_ALL_ROTATE;
   }
 
@@ -1695,22 +1707,39 @@ var endless = exports.endless = function endless(_ref) {
   // eslint-disable-next-line complexity
   var nextStep = function nextStep() {
     var stepColor = colors[getRandom(colorType)];
-    var stepM = getRandom(5);
-    var stepN = getRandom(5);
+
+    // stat available positions
+    var availablePos = [];
+    for (var _j2 = 0; _j2 < 5; _j2++) {
+      for (var _i2 = 0; _i2 < 5; _i2++) {
+        if (colorMap[_j2][_i2] & stepColor) continue;
+        availablePos.push([_i2, _j2]);
+      }
+    }
+    if (!availablePos.length) return 0;
+
+    var _availablePos$getRand = _slicedToArray(availablePos[getRandom(availablePos.length)], 2),
+        stepM = _availablePos$getRand[0],
+        stepN = _availablePos$getRand[1];
+
+    var stepSamePoint = 0;
+    if (colorMap[stepN][stepM] & _consts.R) stepSamePoint++;
+    if (colorMap[stepN][stepM] & _consts.G) stepSamePoint++;
+    if (colorMap[stepN][stepM] & _consts.B) stepSamePoint++;
 
     // init maps
     var signMap = [];
-    for (var _j2 = 0; _j2 < 5; _j2++) {
+    for (var _j3 = 0; _j3 < 5; _j3++) {
       var _line2 = [];
-      for (var _i2 = 0; _i2 < 5; _i2++) {
+      for (var _i3 = 0; _i3 < 5; _i3++) {
         _line2.push(0);
       }
       signMap.push(_line2);
     }
     var weightMap = [];
-    for (var _j3 = 0; _j3 < 5; _j3++) {
+    for (var _j4 = 0; _j4 < 5; _j4++) {
       var _line3 = [];
-      for (var _i3 = 0; _i3 < 5; _i3++) {
+      for (var _i4 = 0; _i4 < 5; _i4++) {
         _line3.push(0);
       }
       weightMap.push(_line3);
@@ -1742,26 +1771,26 @@ var endless = exports.endless = function endless(_ref) {
 
     // extend weight map
     var stepD = 0;
-    for (var _j4 = 0; _j4 < 5; _j4++) {
-      for (var _i4 = 0; _i4 < 5; _i4++) {
-        if (signMap[_j4 - 1] && signMap[_j4 - 1][_i4]) stepD += ++weightMap[_j4][_i4] + opCountMap[_j4][_i4];
-        if (signMap[_j4 + 1] && signMap[_j4 + 1][_i4]) stepD += ++weightMap[_j4][_i4] + opCountMap[_j4][_i4];
-        if (signMap[_j4][_i4 - 1]) stepD += ++weightMap[_j4][_i4] + opCountMap[_j4][_i4];
-        if (signMap[_j4][_i4 + 1]) stepD += ++weightMap[_j4][_i4] + opCountMap[_j4][_i4];
-        if (signMap[_j4][_i4]) stepD += ++weightMap[_j4][_i4] + opCountMap[_j4][_i4];
+    for (var _j5 = 0; _j5 < 5; _j5++) {
+      for (var _i5 = 0; _i5 < 5; _i5++) {
+        if (signMap[_j5 - 1] && signMap[_j5 - 1][_i5]) stepD += ++weightMap[_j5][_i5] + opCountMap[_j5][_i5];
+        if (signMap[_j5 + 1] && signMap[_j5 + 1][_i5]) stepD += ++weightMap[_j5][_i5] + opCountMap[_j5][_i5];
+        if (signMap[_j5][_i5 - 1]) stepD += ++weightMap[_j5][_i5] + opCountMap[_j5][_i5];
+        if (signMap[_j5][_i5 + 1]) stepD += ++weightMap[_j5][_i5] + opCountMap[_j5][_i5];
+        if (signMap[_j5][_i5]) stepD += ++weightMap[_j5][_i5] + opCountMap[_j5][_i5];
       }
     }
 
     // check and write to map
-    stepD *= D_COLOR_COUNT[colorType] * D_STEP_BATCH[stepCount];
+    stepD *= D_COLOR_COUNT[colorType] * D_STEP_BATCH[stepCount] * D_STEP_SAME_POINT[stepSamePoint];
     if (stepD + currentD <= difficulty || currentD === 0) {
       console.info([stepM, stepN, stepColor]); // FIXME step is shown in console
-      for (var _j5 = 0; _j5 < 5; _j5++) {
-        for (var _i5 = 0; _i5 < 5; _i5++) {
-          if (weightMap[_j5][_i5] % 2) {
-            colorMap[_j5][_i5] ^= stepColor;
+      for (var _j6 = 0; _j6 < 5; _j6++) {
+        for (var _i6 = 0; _i6 < 5; _i6++) {
+          if (weightMap[_j6][_i6] % 2) {
+            colorMap[_j6][_i6] ^= stepColor;
           }
-          opCountMap[_j5][_i5] += weightMap[_j5][_i5];
+          opCountMap[_j6][_i6] += weightMap[_j6][_i6];
         }
       }
     } else {
