@@ -20,20 +20,20 @@ export default (stage, container) => {
   container.append(titleContainer)
 
   const tutorialContainer = stage.createContainer().pos(760, 600)
-  const tutorialButton = createButton(stage, 100, 100, 20, () => {
+  const tutorialButton = createButton(stage, 140, 140, 20, () => {
     selectCb('tutorial')
-  })
-  const tutorialText1 = createTexts(stage, '?', 80, COLOR_R_ARR).pos(15, 10).blendMode('SRC_ALPHA', 'ONE')
-  const tutorialText2 = createTexts(stage, '?', 80, COLOR_G_ARR).pos(15, 10).blendMode('SRC_ALPHA', 'ONE')
+  }).pos(-20, -20)
+  const tutorialText1 = createTexts(stage, '?', 100, COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
+  const tutorialText2 = createTexts(stage, '?', 100, COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
   tutorialContainer.append(tutorialButton).append(tutorialText1).append(tutorialText2)
   container.append(tutorialContainer)
 
   const endlessContainer = stage.createContainer().pos(1060, 600)
-  const endlessButton = createButton(stage, 100, 100, 20, () => {
+  const endlessButton = createButton(stage, 140, 140, 20, () => {
     selectCb('endless')
-  })
-  const endlessText1 = createTexts(stage, '\x01', 80, COLOR_R_ARR).pos(15, 10).blendMode('SRC_ALPHA', 'ONE')
-  const endlessText2 = createTexts(stage, '\x01', 80, COLOR_G_ARR).pos(15, 10).blendMode('SRC_ALPHA', 'ONE')
+  }).pos(-20, -20)
+  const endlessText1 = createTexts(stage, '\x01', 100, COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
+  const endlessText2 = createTexts(stage, '\x01', 100, COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
   endlessContainer.append(endlessButton).append(endlessText1).append(endlessText2)
   container.append(endlessContainer)
 

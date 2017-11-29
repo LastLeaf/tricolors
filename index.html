@@ -13,7 +13,7 @@
       var gameCanvas = document.getElementById('game')
       var gameCanvasScale = 1
       var isVertical = false
-      if (document.documentElement.clientWidth < document.documentElement.clientHeight) {
+      if (1 || document.documentElement.clientWidth < document.documentElement.clientHeight) { // force set to vertical layout mode
         gameCanvas.width = 1080
         gameCanvas.height = 1920
         isVertical = true

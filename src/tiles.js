@@ -53,6 +53,7 @@ export default function(stage, mainContainer) {
   let userClickEnabled = false
   let userColor = R | G | B
   let map = null
+  let originalMapJSON = null
   let steps = []
   let startTime = 0
   let timeTobj = null
@@ -75,9 +76,10 @@ export default function(stage, mainContainer) {
   mainContainer.append(metaContainer)
   metaContainer.pos(TILE_AREA_MARGIN, TILE_AREA_MARGIN)
   const colorHintContainer = stage.createContainer(0, 1080 - TILE_AREA_MARGIN * 2 - 200)
-  const levelInfoContainer = stage.createContainer(0,40)
+  const levelInfoContainer = stage.createContainer(0, 40)
+  const menuContainer = stage.createContainer(1080 - TILE_AREA_MARGIN, 30)
   const userColorSelectContainer = stage.createContainer(0, 1080 - TILE_AREA_MARGIN * 2)
-  metaContainer.append(colorHintContainer).append(levelInfoContainer).append(userColorSelectContainer)
+  metaContainer.append(colorHintContainer).append(levelInfoContainer).append(userColorSelectContainer).append(menuContainer)
 
   // add background tiles
   const drawBackground = () => {
@@ -155,6 +157,21 @@ export default function(stage, mainContainer) {
       timeContainer.append(createTexts(stage, minuteStr + secondStr, TIME_SIZE, TITLE_COLOR_ARR))
     }, 1000)
   }
+  const showMenuButtons = () => {
+    const resetButton = createButton(stage, 70, 70, 10, () => {
+      if (!userClickEnabled) return
+      if (currentTutorialStep) return
+      resetLevel()
+    }).pos(-260, 0)
+    const resetText = createTexts(stage, '\x02', 70, [0.4, 0.4, 0.4, 1]).pos(-255, 5)
+    const quitButton = createButton(stage, 70, 70, 10, () => {
+      if (!userClickEnabled) return
+      if (currentTutorialStep) return
+      endLevel(true)
+    }).pos(-140, 0)
+    const quitText = createTexts(stage, '\x03', 70, [0.4, 0.4, 0.4, 1]).pos(-135, 5)
+    menuContainer.append(resetButton).append(resetText).append(quitButton).append(quitText)
+  }
   const showMapInfo = (str) => {
     const mapInfoContainer = createTexts(stage, str, 30, [0.3, 0.3, 0.3, 1]).pos(0, -60)
     levelInfoContainer.append(mapInfoContainer)
@@ -201,8 +218,8 @@ export default function(stage, mainContainer) {
   }
   const drawUserColorSelect = (maxColor) => {
     const SPACING = 30
-    const BORDER_SIZE = 10
-    const SIZE = 60
+    const BORDER_SIZE = 15
+    const SIZE = 70
     let x = 0
     let y = -BORDER_SIZE * 2 - SIZE
     const btns = colorSelectButtons = []
@@ -358,6 +375,7 @@ export default function(stage, mainContainer) {
       if (currentTutorialStep[0] === -1) {
         const btn = colorSelectButtons[currentTutorialStep[1]]
         unflashButton(btn)
+        activateButton(btn)
       } else {
         tutorialContainer.clear()
       }
@@ -386,7 +404,10 @@ export default function(stage, mainContainer) {
     tutorialSteps = level.tutorialSteps || []
     currentTutorialStep = null
     map = level.map || parseLevelStr(level.mapStr)
+    originalMapJSON = JSON.stringify(map)
     // reset ui
+    animateContainer.clear()
+    tutorialContainer.clear()
     resetMetaContainer()
     refreshTiles()
     // stat used colors
@@ -411,8 +432,13 @@ export default function(stage, mainContainer) {
     // show title
     startTime = Date.now() - (level.timeUsed || 0)
     showTitle(level.title, maxColor)
+    showMenuButtons()
     if (level.difficulty) showMapInfo('SEED:' + level.seed + ' D:' + level.difficulty)
     acceptUserClick()
+  }
+  const resetLevel = () => {
+    map = JSON.parse(originalMapJSON)
+    refreshTiles()
   }
   const checkLevelEnd = () => {
     let status = -1
@@ -426,10 +452,11 @@ export default function(stage, mainContainer) {
     endLevel()
     return true
   }
-  const endLevel = () => {
+  const endLevel = (quit = false) => {
     clearInterval(timeTobj)
     levelEndCb({
-      timeUsed: Date.now() - startTime
+      timeUsed: Date.now() - startTime,
+      quit
     })
   }
 

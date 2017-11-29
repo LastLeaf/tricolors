@@ -24,9 +24,10 @@ const P_SYMMETRY_ALL_INC = 0.001 / D_PER_LEVEL
 const P_SYMMETRY_ALL_ROTATE_INC = 0
 
 const SYMMETRY_INC_LEVELS = 16
+const FAIL_STEP = 4
 
-const P_2_COLOR_D_MIN = D_PER_LEVEL * 2
-const P_3_COLOR_D_MIN = D_PER_LEVEL * 4
+const P_2_COLOR_D_MIN = D_PER_LEVEL * 4
+const P_3_COLOR_D_MIN = D_PER_LEVEL * 6
 const P_2_COLOR_D_INC = 0.2 / D_PER_LEVEL
 const P_3_COLOR_D_INC = 0.1 / D_PER_LEVEL
 
@@ -190,7 +191,6 @@ export const endless = ({level, timeUsed}) => {
     // check and write to map
     stepD *= D_COLOR_COUNT[colorType] * D_STEP_BATCH[stepCount] * D_STEP_SAME_POINT[stepSamePoint]
     if (stepD + currentD <= difficulty || currentD === 0) {
-      console.info([stepM, stepN, stepColor]) // FIXME step is shown in console
       for(let j = 0; j < 5; j++) {
         for(let i = 0; i < 5; i++) {
           if (weightMap[j][i] % 2) {
@@ -204,9 +204,10 @@ export const endless = ({level, timeUsed}) => {
     }
     return stepD
   }
+  let allowFailStep = FAIL_STEP
   while (currentD < difficulty) {
     const stepD = nextStep()
-    if (!stepD) break
+    if (!stepD && !--allowFailStep) break
     currentD += stepD
   }
 
