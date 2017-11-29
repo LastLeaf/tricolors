@@ -30,10 +30,11 @@ export const init = (canvas, isVertical) => {
   coverUtils.onSelect((type) => {
     if (type === 'tutorial') {
       root.clear().append(mainContainer)
-      const levels = [TUTORIAL_1, TUTORIAL_2, TUTORIAL_3]
+      const levels = [TUTORIAL_1(), TUTORIAL_2(), TUTORIAL_3()]
       const nextLevel = (item) => {
         if (!levels.length) return showCover()
-        tileUtils.loadLevel(levels.shift(), (info) => {
+        tileUtils.loadLevel(levels.shift(), ({timeUsed, quit}) => {
+          if (quit) return showCover()
           nextLevel()
         })
       }
@@ -41,7 +42,8 @@ export const init = (canvas, isVertical) => {
     } else if (type === 'endless') {
       let levelNum = 0
       root.clear().append(mainContainer)
-      const nextLevel = ({timeUsed}) => {
+      const nextLevel = ({timeUsed, quit}) => {
+        if (quit) return showCover()
         tileUtils.loadLevel(endless({
           level: ++levelNum,
           timeUsed

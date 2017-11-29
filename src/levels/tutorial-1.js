@@ -1,4 +1,4 @@
-export default {
+export default () => ({
   tutorialSteps: [
     [2, 2],
     [2, 3],
@@ -12,4 +12,4 @@ export default {
     -r-r-
     --r--
   `
-}
+})

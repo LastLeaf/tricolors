@@ -26,7 +26,10 @@ export const flashButton = (container) => {
   const btn = container.index(0).color(...COLOR_BTN_FLASH_ARR).setAlpha(0)
   let curAlpha = 0
   const flash = () => {
-    if (!container.buttonFlashing) return
+    if (!container.buttonFlashing) {
+      activateButton(container)
+      return
+    }
     curAlpha = 1 - curAlpha
     animateObj(btn, {
       x: btn.x,
