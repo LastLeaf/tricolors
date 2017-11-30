@@ -27,6 +27,15 @@ Click the "?" button in game cover for the tutorial.
 ![f](screenshots/2.png)
 ![f](screenshots/3.png)
 
+## CREDIT
+
+This game is made by LastLeaf (Fu Boquan), for GitHub Game Off 2017.
+
+My GitHub Game Off 2015 and 2016 games (with different teammates) are also available:
+
+* [A Lighted Story](http://mistymiracle.github.io/a-lighted-story/) - the Game Off 2015 game
+* [Boxie Coody](http://lastflower.github.io/game-off-2016) - the Game Off 2016 game
+
 ## How to Build this game
 
 This game is implemented with WebGL and common HTML5 technologies. You need `nodejs` toolchains to build this game.
@@ -36,8 +45,6 @@ This game is implemented with WebGL and common HTML5 technologies. You need `nod
 1. Run `npm run build`.
 1. Open `index.html` in your browser!
 
-## CREDIT & LISENCE
-
-Copyright 2017 Fu Boquan (LastLeaf)
+## LISENCE
 
 The content of this game is under [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/). The software of this game is under [MIT LICENSE](https://opensource.org/licenses/mit-license.html).
