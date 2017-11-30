@@ -1515,15 +1515,34 @@ var _buttons = __webpack_require__(1);
 
 var _texts = __webpack_require__(3);
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 exports.default = function (stage, container) {
+  var _stage$createRect, _stage$createRect2, _stage$createRect3, _stage$createRect4, _stage$createRect5, _stage$createRect6, _stage$createRect7, _stage$createRect8, _stage$createRect9, _stage$createRect10, _stage$createRect11, _stage$createRect12;
+
   var selectCb = null;
+
+  var titleLineContainer = stage.createContainer().pos(12, 240);
+  var block1 = (_stage$createRect = stage.createRect(0, 0, 40, 40)).color.apply(_stage$createRect, _toConsumableArray(_consts.COLOR_R_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block2 = (_stage$createRect2 = stage.createRect(760 * 1 / 6, 0, 40, 40)).color.apply(_stage$createRect2, _toConsumableArray(_consts.COLOR_G_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block3 = (_stage$createRect3 = stage.createRect(760 * 2 / 6, 0, 40, 40)).color.apply(_stage$createRect3, _toConsumableArray(_consts.COLOR_B_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block41 = (_stage$createRect4 = stage.createRect(760 * 3 / 6, 0, 40, 40)).color.apply(_stage$createRect4, _toConsumableArray(_consts.COLOR_R_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block42 = (_stage$createRect5 = stage.createRect(760 * 3 / 6, 0, 40, 40)).color.apply(_stage$createRect5, _toConsumableArray(_consts.COLOR_G_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block51 = (_stage$createRect6 = stage.createRect(760 * 4 / 6, 0, 40, 40)).color.apply(_stage$createRect6, _toConsumableArray(_consts.COLOR_R_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block52 = (_stage$createRect7 = stage.createRect(760 * 4 / 6, 0, 40, 40)).color.apply(_stage$createRect7, _toConsumableArray(_consts.COLOR_B_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block61 = (_stage$createRect8 = stage.createRect(760 * 5 / 6, 0, 40, 40)).color.apply(_stage$createRect8, _toConsumableArray(_consts.COLOR_G_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block62 = (_stage$createRect9 = stage.createRect(760 * 5 / 6, 0, 40, 40)).color.apply(_stage$createRect9, _toConsumableArray(_consts.COLOR_B_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block71 = (_stage$createRect10 = stage.createRect(760, 0, 40, 40)).color.apply(_stage$createRect10, _toConsumableArray(_consts.COLOR_R_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block72 = (_stage$createRect11 = stage.createRect(760, 0, 40, 40)).color.apply(_stage$createRect11, _toConsumableArray(_consts.COLOR_G_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block73 = (_stage$createRect12 = stage.createRect(760, 0, 40, 40)).color.apply(_stage$createRect12, _toConsumableArray(_consts.COLOR_B_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  titleLineContainer.append(block1).append(block2).append(block3).append(block41).append(block42).append(block51).append(block52).append(block61).append(block62).append(block71).append(block72).append(block73);
 
   var titleContainer = stage.createContainer().pos(555, 300);
   var title1 = (0, _texts.createTexts)(stage, 'TRI', 120, _consts.COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE');
   var title2 = (0, _texts.createTexts)(stage, 'TRI', 120, _consts.COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE');
   var title3 = (0, _texts.createTexts)(stage, 'COLORS', 120, _consts.COLOR_G_ARR).pos(270, 0).blendMode('SRC_ALPHA', 'ONE');
   var title4 = (0, _texts.createTexts)(stage, 'COLORS', 120, _consts.COLOR_B_ARR).pos(270, 0).blendMode('SRC_ALPHA', 'ONE');
-  titleContainer.append(title1).append(title2).append(title3).append(title4);
+  titleContainer.append(title1).append(title2).append(title3).append(title4).append(titleLineContainer);
   container.append(titleContainer);
 
   var tutorialContainer = stage.createContainer().pos(760, 600);
