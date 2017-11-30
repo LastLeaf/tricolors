@@ -11,13 +11,33 @@ import { createTexts } from './texts'
 export default (stage, container) => {
   let selectCb = null
 
+  const titleLineContainer = stage.createContainer().pos(12, 240)
+  const block1 = stage.createRect(0, 0, 40, 40).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block2 = stage.createRect(760 * 1 / 6, 0, 40, 40).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block3 = stage.createRect(760 * 2 / 6, 0, 40, 40).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block41 = stage.createRect(760 * 3 / 6, 0, 40, 40).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block42 = stage.createRect(760 * 3 / 6, 0, 40, 40).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block51 = stage.createRect(760 * 4 / 6, 0, 40, 40).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block52 = stage.createRect(760 * 4 / 6, 0, 40, 40).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block61 = stage.createRect(760 * 5 / 6, 0, 40, 40).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block62 = stage.createRect(760 * 5 / 6, 0, 40, 40).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block71 = stage.createRect(760, 0, 40, 40).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block72 = stage.createRect(760, 0, 40, 40).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE')
+  const block73 = stage.createRect(760, 0, 40, 40).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE')
+  titleLineContainer.append(block1).append(block2).append(block3)
+    .append(block41).append(block42)
+    .append(block51).append(block52)
+    .append(block61).append(block62)
+    .append(block71).append(block72).append(block73)
+
   const titleContainer = stage.createContainer().pos(555, 300)
   const title1 = createTexts(stage, 'TRI', 120, COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
   const title2 = createTexts(stage, 'TRI', 120, COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE')
   const title3 = createTexts(stage, 'COLORS', 120, COLOR_G_ARR).pos(270, 0).blendMode('SRC_ALPHA', 'ONE')
   const title4 = createTexts(stage, 'COLORS', 120, COLOR_B_ARR).pos(270, 0).blendMode('SRC_ALPHA', 'ONE')
-  titleContainer.append(title1).append(title2).append(title3).append(title4)
+  titleContainer.append(title1).append(title2).append(title3).append(title4).append(titleLineContainer)
   container.append(titleContainer)
+
 
   const tutorialContainer = stage.createContainer().pos(760, 600)
   const tutorialButton = createButton(stage, 140, 140, 20, () => {
