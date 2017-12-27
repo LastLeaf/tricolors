@@ -8,13 +8,23 @@ import {
 } from './buttons'
 import { createTexts } from './texts'
 
-export default (stage, container) => {
+export default (stage, container, options) => {
+  const {language} = options
   let selectCb = null
 
   const titleLineContainer = stage.createContainer().pos(12, 240)
-  const block1 = stage.createRect(0, 0, 40, 40).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
-  const block2 = stage.createRect(760 * 1 / 6, 0, 40, 40).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE')
-  const block3 = stage.createRect(760 * 2 / 6, 0, 40, 40).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE')
+  let block1 = null
+  let block2 = null
+  let block3 = null
+  if (language === 'zh-CN') {
+    block1 = createTexts(stage, '三', 100, COLOR_R_ARR).pos(-30, -30).blendMode('SRC_ALPHA', 'ONE')
+    block2 = createTexts(stage, '原', 100, COLOR_G_ARR).pos(760 * 1 / 6 - 30, -30).blendMode('SRC_ALPHA', 'ONE')
+    block3 = createTexts(stage, '色', 100, COLOR_B_ARR).pos(760 * 2 / 6 - 30, -30).blendMode('SRC_ALPHA', 'ONE')
+  } else {
+    block1 = stage.createRect(0, 0, 40, 40).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
+    block2 = stage.createRect(760 * 1 / 6, 0, 40, 40).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE')
+    block3 = stage.createRect(760 * 2 / 6, 0, 40, 40).color(...COLOR_B_ARR).blendMode('SRC_ALPHA', 'ONE')
+  }
   const block41 = stage.createRect(760 * 3 / 6, 0, 40, 40).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
   const block42 = stage.createRect(760 * 3 / 6, 0, 40, 40).color(...COLOR_G_ARR).blendMode('SRC_ALPHA', 'ONE')
   const block51 = stage.createRect(760 * 4 / 6, 0, 40, 40).color(...COLOR_R_ARR).blendMode('SRC_ALPHA', 'ONE')
@@ -39,21 +49,21 @@ export default (stage, container) => {
   container.append(titleContainer)
 
 
-  const tutorialContainer = stage.createContainer().pos(760, 600)
-  const tutorialButton = createButton(stage, 140, 140, 20, () => {
+  const tutorialContainer = stage.createContainer().pos(700, 600)
+  const tutorialButton = createButton(stage, 180, 180, 20, () => {
     selectCb('tutorial')
   }).pos(-20, -20)
-  const tutorialText1 = createTexts(stage, '?', 100, COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
-  const tutorialText2 = createTexts(stage, '?', 100, COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
+  const tutorialText1 = createTexts(stage, '?', 140, COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
+  const tutorialText2 = createTexts(stage, '?', 140, COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
   tutorialContainer.append(tutorialButton).append(tutorialText1).append(tutorialText2)
   container.append(tutorialContainer)
 
   const endlessContainer = stage.createContainer().pos(1060, 600)
-  const endlessButton = createButton(stage, 140, 140, 20, () => {
+  const endlessButton = createButton(stage, 180, 180, 20, () => {
     selectCb('endless')
   }).pos(-20, -20)
-  const endlessText1 = createTexts(stage, '\x01', 100, COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
-  const endlessText2 = createTexts(stage, '\x01', 100, COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
+  const endlessText1 = createTexts(stage, '\x01', 140, COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
+  const endlessText2 = createTexts(stage, '\x01', 140, COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE')
   endlessContainer.append(endlessButton).append(endlessText1).append(endlessText2)
   container.append(endlessContainer)
 
@@ -69,8 +79,8 @@ export default (stage, container) => {
     changeOrientation: (isVertical) => {
       if (isVertical) {
         titleContainer.pos(135, 500)
-        tutorialContainer.pos(300, 1200)
-        endlessContainer.pos(680, 1200)
+        tutorialContainer.pos(260, 1200)
+        endlessContainer.pos(700, 1200)
         authorContainer.pos(420, 1800)
       }
     },

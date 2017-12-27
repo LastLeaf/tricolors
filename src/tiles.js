@@ -17,6 +17,7 @@ import {
 } from './buttons'
 import { createTexts } from './texts'
 import { animateObj } from './animate'
+import { shareLevel } from './share'
 
 const M_N_MAX = 5
 const TILE_SIZE = 150
@@ -54,8 +55,11 @@ export default function(stage, mainContainer) {
   let userColor = R | G | B
   let map = null
   let originalMapJSON = null
+  let seed = 0
+  let levelNum = 0
   let steps = []
   let startTime = 0
+  let stepCount = 0
   let timeTobj = null
   let currentTutorialStep = null
   let tutorialSteps = null
@@ -136,41 +140,55 @@ export default function(stage, mainContainer) {
   // show user color status
   let colorSelectButtons = []
   let colorHints = {}
+  let stepCounterContainer = null
   const resetMetaContainer = () => {
     colorSelectButtons = []
     colorHintContainer.clear()
     levelInfoContainer.clear()
     userColorSelectContainer.clear()
   }
+  const TITLE_SIZE = 100
+  const TIME_SIZE = 40
+  const TITLE_COLOR_ARR = [0.5, 0.5, 0.5, 1]
   const showTitle = (titleText, maxColor) => {
-    const TITLE_SIZE = 100
-    const TIME_SIZE = 40
-    const TITLE_COLOR_ARR = [0.5, 0.5, 0.5, 1]
     const titleContainer = createTexts(stage, titleText, TITLE_SIZE, TITLE_COLOR_ARR)
     const timeContainer = stage.createContainer(0, TITLE_SIZE + 20)
-    levelInfoContainer.append(titleContainer).append(timeContainer)
-    timeTobj = setInterval(() => {
+    stepCounterContainer = stage.createContainer(0, TITLE_SIZE + 20)
+    levelInfoContainer.append(titleContainer).append(timeContainer).append(stepCounterContainer)
+    const showTime = () => {
       const timeDiff = Math.floor((Date.now() - startTime) / 1000)
       const minuteStr = (timeDiff < 600 ? '0' : '') + Math.floor(timeDiff / 60)
       const secondStr = ':' + String(timeDiff % 60 + 100).slice(1)
+      const str = minuteStr + secondStr
       timeContainer.clear()
-      timeContainer.append(createTexts(stage, minuteStr + secondStr, TIME_SIZE, TITLE_COLOR_ARR))
-    }, 1000)
+      timeContainer.append(createTexts(stage, str, TIME_SIZE, TITLE_COLOR_ARR))
+      stepCounterContainer.pos((str.length + 1) * TIME_SIZE * 0.75, TITLE_SIZE + 20)
+    }
+    showTime()
+    timeTobj = setInterval(showTime, 1000)
+  }
+  const updateStepCounter = (num) => {
+    stepCounterContainer.clear()
+    stepCounterContainer.append(createTexts(stage, '(' + String(num) + ')', TIME_SIZE, TITLE_COLOR_ARR))
   }
   const showMenuButtons = () => {
-    const resetButton = createButton(stage, 70, 70, 10, () => {
+    const shareButton = createButton(stage, 90, 90, 10, () => {
+      shareLevel({seed, levelNum, timeUsed: Date.now() - startTime, stepCount})
+    }).pos(-440, 0)
+    const shareText = createTexts(stage, '\x04', 90, [0.4, 0.4, 0.4, 1]).pos(-435, 5)
+    const resetButton = createButton(stage, 90, 90, 10, () => {
       if (!userClickEnabled) return
       if (currentTutorialStep) return
       resetLevel()
-    }).pos(-260, 0)
-    const resetText = createTexts(stage, '\x02', 70, [0.4, 0.4, 0.4, 1]).pos(-255, 5)
-    const quitButton = createButton(stage, 70, 70, 10, () => {
+    }).pos(-300, 0)
+    const resetText = createTexts(stage, '\x02', 90, [0.4, 0.4, 0.4, 1]).pos(-295, 5)
+    const quitButton = createButton(stage, 90, 90, 10, () => {
       if (!userClickEnabled) return
       if (currentTutorialStep) return
       endLevel(true)
-    }).pos(-140, 0)
-    const quitText = createTexts(stage, '\x03', 70, [0.4, 0.4, 0.4, 1]).pos(-135, 5)
-    menuContainer.append(resetButton).append(resetText).append(quitButton).append(quitText)
+    }).pos(-160, 0)
+    const quitText = createTexts(stage, '\x03', 90, [0.4, 0.4, 0.4, 1]).pos(-155, 5)
+    menuContainer.clear().append(shareButton).append(shareText).append(resetButton).append(resetText).append(quitButton).append(quitText)
   }
   const showMapInfo = (str) => {
     const mapInfoContainer = createTexts(stage, str, 30, [0.3, 0.3, 0.3, 1]).pos(0, -60)
@@ -357,6 +375,7 @@ export default function(stage, mainContainer) {
       from: num,
       to: num ? 0 : userColor
     })
+    updateStepCounter(++stepCount)
     if (num) {
       userColor = num
       refreshColorSelectButtons()
@@ -405,6 +424,8 @@ export default function(stage, mainContainer) {
     currentTutorialStep = null
     map = level.map || parseLevelStr(level.mapStr)
     originalMapJSON = JSON.stringify(map)
+    levelNum = level.level
+    seed = level.seed
     // reset ui
     animateContainer.clear()
     tutorialContainer.clear()
@@ -432,6 +453,7 @@ export default function(stage, mainContainer) {
     // show title
     startTime = Date.now() - (level.timeUsed || 0)
     showTitle(level.title, maxColor)
+    updateStepCounter(stepCount = level.stepCount || 0)
     showMenuButtons()
     if (level.difficulty) showMapInfo('SEED:' + level.seed + ' D:' + level.difficulty)
     acceptUserClick()
@@ -456,6 +478,7 @@ export default function(stage, mainContainer) {
     clearInterval(timeTobj)
     levelEndCb({
       timeUsed: Date.now() - startTime,
+      stepCount,
       quit
     })
   }

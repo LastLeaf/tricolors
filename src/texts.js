@@ -2,6 +2,7 @@ import LETTERS from './dot-fonts/letters'
 import NUMBERS from './dot-fonts/numbers'
 import SYMBOLS from './dot-fonts/symbols'
 import SPECIAL from './dot-fonts/special'
+import CHINESE from './dot-fonts/chinese'
 
 const dotsPositions = Object.create(null)
 const dotsInfo = Object.create(null)
@@ -30,6 +31,7 @@ for(let k in LETTERS) prepareFonts(k, LETTERS[k])
 for(let k in NUMBERS) prepareFonts(k, NUMBERS[k])
 for(let k in SYMBOLS) prepareFonts(k, SYMBOLS[k])
 for(let k in SPECIAL) prepareFonts(k, SPECIAL[k])
+for(let k in CHINESE) prepareFonts(k, CHINESE[k])
 
 export const createTexts = (stage, str, size, color) => {
   const container = stage.createContainer()

@@ -5,6 +5,7 @@ import TUTORIAL_1 from './levels/tutorial-1'
 import TUTORIAL_2 from './levels/tutorial-2'
 import TUTORIAL_3 from './levels/tutorial-3'
 import { endless } from './generator'
+import { getShareInfo } from './share'
 
 let tileUtils = null
 
@@ -14,7 +15,8 @@ export const changeOrientation = (isVertical) => {
   tileUtils.changeOrientation(isVertical)
 }
 
-export const init = (canvas, isVertical) => {
+export const init = (canvas, options) => {
+  const {isVertical} = options
   const stage = new SimpleGL(canvas)
   const root = stage.getRootContainer()
 
@@ -25,7 +27,7 @@ export const init = (canvas, isVertical) => {
 
   // init cover
   const coverContainer = stage.createContainer()
-  const coverUtils = cover(stage, coverContainer)
+  const coverUtils = cover(stage, coverContainer, options)
   if (isVertical) coverUtils.changeOrientation(isVertical)
   coverUtils.onSelect((type) => {
     if (type === 'tutorial') {
@@ -33,19 +35,22 @@ export const init = (canvas, isVertical) => {
       const levels = [TUTORIAL_1(), TUTORIAL_2(), TUTORIAL_3()]
       const nextLevel = (item) => {
         if (!levels.length) return showCover()
-        tileUtils.loadLevel(levels.shift(), ({timeUsed, quit}) => {
+        tileUtils.loadLevel(levels.shift(), ({timeUsed, stepCount, quit}) => {
           if (quit) return showCover()
           nextLevel()
         })
       }
       nextLevel()
     } else if (type === 'endless') {
+      const seed = Math.floor(Math.random() * (1000000000))
       let levelNum = 0
       root.clear().append(mainContainer)
-      const nextLevel = ({timeUsed, quit}) => {
+      const nextLevel = ({timeUsed, stepCount, quit}) => {
         if (quit) return showCover()
         tileUtils.loadLevel(endless({
+          seed,
           level: ++levelNum,
+          stepCount,
           timeUsed
         }), nextLevel)
       }
@@ -60,7 +65,28 @@ export const init = (canvas, isVertical) => {
   const showCover = () => {
     root.clear().append(coverContainer)
   }
-  showCover()
+
+  const shareInfo = getShareInfo()
+  if (!shareInfo) {
+    showCover()
+  } else {
+    let {seed, levelNum, timeUsed, stepCount} = shareInfo
+    levelNum--
+    root.clear().append(mainContainer)
+    const nextLevel = ({timeUsed, stepCount, quit}) => {
+      if (quit) return showCover()
+      tileUtils.loadLevel(endless({
+        seed,
+        level: ++levelNum,
+        stepCount,
+        timeUsed
+      }), nextLevel)
+    }
+    nextLevel({
+      timeUsed,
+      stepCount
+    })
+  }
 
   return stage
 }

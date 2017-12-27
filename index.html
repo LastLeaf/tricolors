@@ -13,6 +13,7 @@
       var gameCanvas = document.getElementById('game')
       var gameCanvasScale = 1
       var isVertical = false
+      var language = navigator.language.match(/^zh(-|$)/) ? 'zh-CN' : 'C'
       if (1 || document.documentElement.clientWidth < document.documentElement.clientHeight) { // force set to vertical layout mode
         gameCanvas.width = 1080
         gameCanvas.height = 1920
@@ -39,7 +40,7 @@
       resizeCb()
       window.onresize = resizeCb
 
-      var stage = game.init(gameCanvas, isVertical)
+      var stage = game.init(gameCanvas, { isVertical: isVertical, language: language })
       gameCanvas.addEventListener('click', (e) => {
         const {top, left} = gameCanvas.getBoundingClientRect()
         const x = (e.clientX - left) / gameCanvasScale

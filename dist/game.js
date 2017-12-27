@@ -237,6 +237,10 @@ var _special = __webpack_require__(12);
 
 var _special2 = _interopRequireDefault(_special);
 
+var _chinese = __webpack_require__(18);
+
+var _chinese2 = _interopRequireDefault(_chinese);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -273,6 +277,8 @@ for (var k in _letters2.default) {
   prepareFonts(_k2, _symbols2.default[_k2]);
 }for (var _k3 in _special2.default) {
   prepareFonts(_k3, _special2.default[_k3]);
+}for (var _k4 in _chinese2.default) {
+  prepareFonts(_k4, _chinese2.default[_k4]);
 }var createTexts = exports.createTexts = function createTexts(stage, str, size, color) {
   var container = stage.createContainer();
   var x = 0;
@@ -337,6 +343,8 @@ var _tutorial6 = _interopRequireDefault(_tutorial5);
 
 var _generator = __webpack_require__(17);
 
+var _share = __webpack_require__(19);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var tileUtils = null;
@@ -347,7 +355,9 @@ var changeOrientation = exports.changeOrientation = function changeOrientation(i
   tileUtils.changeOrientation(isVertical);
 };
 
-var init = exports.init = function init(canvas, isVertical) {
+var init = exports.init = function init(canvas, options) {
+  var isVertical = options.isVertical;
+
   var stage = new _simpleGl.SimpleGL(canvas);
   var root = stage.getRootContainer();
 
@@ -358,7 +368,7 @@ var init = exports.init = function init(canvas, isVertical) {
 
   // init cover
   var coverContainer = stage.createContainer();
-  var coverUtils = (0, _cover2.default)(stage, coverContainer);
+  var coverUtils = (0, _cover2.default)(stage, coverContainer, options);
   if (isVertical) coverUtils.changeOrientation(isVertical);
   coverUtils.onSelect(function (type) {
     if (type === 'tutorial') {
@@ -368,6 +378,7 @@ var init = exports.init = function init(canvas, isVertical) {
         if (!levels.length) return showCover();
         tileUtils.loadLevel(levels.shift(), function (_ref) {
           var timeUsed = _ref.timeUsed,
+              stepCount = _ref.stepCount,
               quit = _ref.quit;
 
           if (quit) return showCover();
@@ -376,15 +387,19 @@ var init = exports.init = function init(canvas, isVertical) {
       };
       nextLevel();
     } else if (type === 'endless') {
+      var seed = Math.floor(Math.random() * 1000000000);
       var levelNum = 0;
       root.clear().append(mainContainer);
       var _nextLevel = function _nextLevel(_ref2) {
         var timeUsed = _ref2.timeUsed,
+            stepCount = _ref2.stepCount,
             quit = _ref2.quit;
 
         if (quit) return showCover();
         tileUtils.loadLevel((0, _generator.endless)({
+          seed: seed,
           level: ++levelNum,
+          stepCount: stepCount,
           timeUsed: timeUsed
         }), _nextLevel);
       };
@@ -399,7 +414,36 @@ var init = exports.init = function init(canvas, isVertical) {
   var showCover = function showCover() {
     root.clear().append(coverContainer);
   };
-  showCover();
+
+  var shareInfo = (0, _share.getShareInfo)();
+  if (!shareInfo) {
+    showCover();
+  } else {
+    var seed = shareInfo.seed,
+        levelNum = shareInfo.levelNum,
+        timeUsed = shareInfo.timeUsed,
+        stepCount = shareInfo.stepCount;
+
+    levelNum--;
+    root.clear().append(mainContainer);
+    var nextLevel = function nextLevel(_ref3) {
+      var timeUsed = _ref3.timeUsed,
+          stepCount = _ref3.stepCount,
+          quit = _ref3.quit;
+
+      if (quit) return showCover();
+      tileUtils.loadLevel((0, _generator.endless)({
+        seed: seed,
+        level: ++levelNum,
+        stepCount: stepCount,
+        timeUsed: timeUsed
+      }), nextLevel);
+    };
+    nextLevel({
+      timeUsed: timeUsed,
+      stepCount: stepCount
+    });
+  }
 
   return stage;
 };
@@ -915,8 +959,11 @@ exports.default = function (stage, mainContainer) {
   var userColor = _consts.R | _consts.G | _consts.B;
   var map = null;
   var originalMapJSON = null;
+  var seed = 0;
+  var levelNum = 0;
   var steps = [];
   var startTime = 0;
+  var stepCount = 0;
   var timeTobj = null;
   var currentTutorialStep = null;
   var tutorialSteps = null;
@@ -1013,41 +1060,55 @@ exports.default = function (stage, mainContainer) {
   // show user color status
   var colorSelectButtons = [];
   var colorHints = {};
+  var stepCounterContainer = null;
   var resetMetaContainer = function resetMetaContainer() {
     colorSelectButtons = [];
     colorHintContainer.clear();
     levelInfoContainer.clear();
     userColorSelectContainer.clear();
   };
+  var TITLE_SIZE = 100;
+  var TIME_SIZE = 40;
+  var TITLE_COLOR_ARR = [0.5, 0.5, 0.5, 1];
   var showTitle = function showTitle(titleText, maxColor) {
-    var TITLE_SIZE = 100;
-    var TIME_SIZE = 40;
-    var TITLE_COLOR_ARR = [0.5, 0.5, 0.5, 1];
     var titleContainer = (0, _texts.createTexts)(stage, titleText, TITLE_SIZE, TITLE_COLOR_ARR);
     var timeContainer = stage.createContainer(0, TITLE_SIZE + 20);
-    levelInfoContainer.append(titleContainer).append(timeContainer);
-    timeTobj = setInterval(function () {
+    stepCounterContainer = stage.createContainer(0, TITLE_SIZE + 20);
+    levelInfoContainer.append(titleContainer).append(timeContainer).append(stepCounterContainer);
+    var showTime = function showTime() {
       var timeDiff = Math.floor((Date.now() - startTime) / 1000);
       var minuteStr = (timeDiff < 600 ? '0' : '') + Math.floor(timeDiff / 60);
       var secondStr = ':' + String(timeDiff % 60 + 100).slice(1);
+      var str = minuteStr + secondStr;
       timeContainer.clear();
-      timeContainer.append((0, _texts.createTexts)(stage, minuteStr + secondStr, TIME_SIZE, TITLE_COLOR_ARR));
-    }, 1000);
+      timeContainer.append((0, _texts.createTexts)(stage, str, TIME_SIZE, TITLE_COLOR_ARR));
+      stepCounterContainer.pos((str.length + 1) * TIME_SIZE * 0.75, TITLE_SIZE + 20);
+    };
+    showTime();
+    timeTobj = setInterval(showTime, 1000);
+  };
+  var updateStepCounter = function updateStepCounter(num) {
+    stepCounterContainer.clear();
+    stepCounterContainer.append((0, _texts.createTexts)(stage, '(' + String(num) + ')', TIME_SIZE, TITLE_COLOR_ARR));
   };
   var showMenuButtons = function showMenuButtons() {
-    var resetButton = (0, _buttons.createButton)(stage, 70, 70, 10, function () {
+    var shareButton = (0, _buttons.createButton)(stage, 90, 90, 10, function () {
+      (0, _share.shareLevel)({ seed: seed, levelNum: levelNum, timeUsed: Date.now() - startTime, stepCount: stepCount });
+    }).pos(-440, 0);
+    var shareText = (0, _texts.createTexts)(stage, '\x04', 90, [0.4, 0.4, 0.4, 1]).pos(-435, 5);
+    var resetButton = (0, _buttons.createButton)(stage, 90, 90, 10, function () {
       if (!userClickEnabled) return;
       if (currentTutorialStep) return;
       resetLevel();
-    }).pos(-260, 0);
-    var resetText = (0, _texts.createTexts)(stage, '\x02', 70, [0.4, 0.4, 0.4, 1]).pos(-255, 5);
-    var quitButton = (0, _buttons.createButton)(stage, 70, 70, 10, function () {
+    }).pos(-300, 0);
+    var resetText = (0, _texts.createTexts)(stage, '\x02', 90, [0.4, 0.4, 0.4, 1]).pos(-295, 5);
+    var quitButton = (0, _buttons.createButton)(stage, 90, 90, 10, function () {
       if (!userClickEnabled) return;
       if (currentTutorialStep) return;
       endLevel(true);
-    }).pos(-140, 0);
-    var quitText = (0, _texts.createTexts)(stage, '\x03', 70, [0.4, 0.4, 0.4, 1]).pos(-135, 5);
-    menuContainer.append(resetButton).append(resetText).append(quitButton).append(quitText);
+    }).pos(-160, 0);
+    var quitText = (0, _texts.createTexts)(stage, '\x03', 90, [0.4, 0.4, 0.4, 1]).pos(-155, 5);
+    menuContainer.clear().append(shareButton).append(shareText).append(resetButton).append(resetText).append(quitButton).append(quitText);
   };
   var showMapInfo = function showMapInfo(str) {
     var mapInfoContainer = (0, _texts.createTexts)(stage, str, 30, [0.3, 0.3, 0.3, 1]).pos(0, -60);
@@ -1238,6 +1299,7 @@ exports.default = function (stage, mainContainer) {
       from: num,
       to: num ? 0 : userColor
     });
+    updateStepCounter(++stepCount);
     if (num) {
       userColor = num;
       refreshColorSelectButtons();
@@ -1286,6 +1348,8 @@ exports.default = function (stage, mainContainer) {
     currentTutorialStep = null;
     map = level.map || parseLevelStr(level.mapStr);
     originalMapJSON = JSON.stringify(map);
+    levelNum = level.level;
+    seed = level.seed;
     // reset ui
     animateContainer.clear();
     tutorialContainer.clear();
@@ -1313,6 +1377,7 @@ exports.default = function (stage, mainContainer) {
     // show title
     startTime = Date.now() - (level.timeUsed || 0);
     showTitle(level.title, maxColor);
+    updateStepCounter(stepCount = level.stepCount || 0);
     showMenuButtons();
     if (level.difficulty) showMapInfo('SEED:' + level.seed + ' D:' + level.difficulty);
     acceptUserClick();
@@ -1338,6 +1403,7 @@ exports.default = function (stage, mainContainer) {
     clearInterval(timeTobj);
     levelEndCb({
       timeUsed: Date.now() - startTime,
+      stepCount: stepCount,
       quit: quit
     });
   };
@@ -1361,6 +1427,8 @@ var _buttons = __webpack_require__(1);
 var _texts = __webpack_require__(3);
 
 var _animate = __webpack_require__(2);
+
+var _share = __webpack_require__(19);
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -1426,7 +1494,7 @@ exports.default = {
   O: "\n    [6,8]\n      +++\n     +   +\n     +   +\n     +   +\n     +   +\n     +   +\n      +++\n  ",
   P: "\n    [6,8]\n     +++\n     +  +\n     +   +\n     +  +\n     +++\n     +\n     +\n  ",
   Q: "\n    [6,8]\n     +   +\n     ++  +\n     + + +\n     +  ++\n     +   +\n     +   +\n     +   +\n  ",
-  R: "\n    [6,8]\n     ++++\n     +   +\n     +  +\n     +++\n     +  +\n     +   +\n     +   +\n  ",
+  R: "\n    [6,8]\n     ++++\n     +   +\n     +   +\n     +  +\n     +++\n     +  +\n     +   +\n  ",
   S: "\n    [6,8]\n      +++\n     +   +\n      +\n       +\n        +\n     +   +\n      +++\n  ",
   T: "\n    [6,8]\n     +++++\n       +\n       +\n       +\n       +\n       +\n       +\n  ",
 
@@ -1479,7 +1547,9 @@ exports.default = {
   '.': '\n    [6,8]\n\n\n\n\n\n      ++\n      ++\n  ',
   ':': '\n    [6,8]\n\n\n       +\n\n\n       +\n\n  ',
   '#': '\n    [6,8]\n      + +\n      + +\n     +++++\n      + +\n     +++++\n      + +\n      + +\n  ',
-  '?': '\n    [6,8]\n      +++\n     +   +\n         +\n        +\n       +\n\n       +\n  '
+  '?': '\n    [6,8]\n      +++\n     +   +\n         +\n        +\n       +\n\n       +\n  ',
+  '(': '\n    [6,8]\n        +\n       +\n      +\n      +\n      +\n       +\n        +\n  ',
+  ')': '\n    [6,8]\n      +\n       +\n        +\n        +\n        +\n       +\n      +\n  '
 };
 
 /***/ }),
@@ -1495,7 +1565,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = {
   '\x01': '\n    [6,8]\n     ++\n     +++\n     ++++\n     +++++\n     ++++\n     +++\n     ++\n  ',
   '\x02': '\n    [6,8]\n\n     +++++\n      +  +\n         +\n         +\n     +++++\n\n  ',
-  '\x03': '\n    [6,8]\n\n     +   +\n      + +\n       +\n      + +\n     +   +\n\n  '
+  '\x03': '\n    [6,8]\n\n     +   +\n      + +\n       +\n      + +\n     +   +\n\n  ',
+  '\x04': '\n    [6,8]\n\n      ++++\n        ++\n       + +\n      +  +\n     +\n\n  '
 };
 
 /***/ }),
@@ -1517,15 +1588,28 @@ var _texts = __webpack_require__(3);
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-exports.default = function (stage, container) {
-  var _stage$createRect, _stage$createRect2, _stage$createRect3, _stage$createRect4, _stage$createRect5, _stage$createRect6, _stage$createRect7, _stage$createRect8, _stage$createRect9, _stage$createRect10, _stage$createRect11, _stage$createRect12;
+exports.default = function (stage, container, options) {
+  var _stage$createRect4, _stage$createRect5, _stage$createRect6, _stage$createRect7, _stage$createRect8, _stage$createRect9, _stage$createRect10, _stage$createRect11, _stage$createRect12;
+
+  var language = options.language;
 
   var selectCb = null;
 
   var titleLineContainer = stage.createContainer().pos(12, 240);
-  var block1 = (_stage$createRect = stage.createRect(0, 0, 40, 40)).color.apply(_stage$createRect, _toConsumableArray(_consts.COLOR_R_ARR)).blendMode('SRC_ALPHA', 'ONE');
-  var block2 = (_stage$createRect2 = stage.createRect(760 * 1 / 6, 0, 40, 40)).color.apply(_stage$createRect2, _toConsumableArray(_consts.COLOR_G_ARR)).blendMode('SRC_ALPHA', 'ONE');
-  var block3 = (_stage$createRect3 = stage.createRect(760 * 2 / 6, 0, 40, 40)).color.apply(_stage$createRect3, _toConsumableArray(_consts.COLOR_B_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  var block1 = null;
+  var block2 = null;
+  var block3 = null;
+  if (language === 'zh-CN') {
+    block1 = (0, _texts.createTexts)(stage, '三', 100, _consts.COLOR_R_ARR).pos(-30, -30).blendMode('SRC_ALPHA', 'ONE');
+    block2 = (0, _texts.createTexts)(stage, '原', 100, _consts.COLOR_G_ARR).pos(760 * 1 / 6 - 30, -30).blendMode('SRC_ALPHA', 'ONE');
+    block3 = (0, _texts.createTexts)(stage, '色', 100, _consts.COLOR_B_ARR).pos(760 * 2 / 6 - 30, -30).blendMode('SRC_ALPHA', 'ONE');
+  } else {
+    var _stage$createRect, _stage$createRect2, _stage$createRect3;
+
+    block1 = (_stage$createRect = stage.createRect(0, 0, 40, 40)).color.apply(_stage$createRect, _toConsumableArray(_consts.COLOR_R_ARR)).blendMode('SRC_ALPHA', 'ONE');
+    block2 = (_stage$createRect2 = stage.createRect(760 * 1 / 6, 0, 40, 40)).color.apply(_stage$createRect2, _toConsumableArray(_consts.COLOR_G_ARR)).blendMode('SRC_ALPHA', 'ONE');
+    block3 = (_stage$createRect3 = stage.createRect(760 * 2 / 6, 0, 40, 40)).color.apply(_stage$createRect3, _toConsumableArray(_consts.COLOR_B_ARR)).blendMode('SRC_ALPHA', 'ONE');
+  }
   var block41 = (_stage$createRect4 = stage.createRect(760 * 3 / 6, 0, 40, 40)).color.apply(_stage$createRect4, _toConsumableArray(_consts.COLOR_R_ARR)).blendMode('SRC_ALPHA', 'ONE');
   var block42 = (_stage$createRect5 = stage.createRect(760 * 3 / 6, 0, 40, 40)).color.apply(_stage$createRect5, _toConsumableArray(_consts.COLOR_G_ARR)).blendMode('SRC_ALPHA', 'ONE');
   var block51 = (_stage$createRect6 = stage.createRect(760 * 4 / 6, 0, 40, 40)).color.apply(_stage$createRect6, _toConsumableArray(_consts.COLOR_R_ARR)).blendMode('SRC_ALPHA', 'ONE');
@@ -1545,21 +1629,21 @@ exports.default = function (stage, container) {
   titleContainer.append(title1).append(title2).append(title3).append(title4).append(titleLineContainer);
   container.append(titleContainer);
 
-  var tutorialContainer = stage.createContainer().pos(760, 600);
-  var tutorialButton = (0, _buttons.createButton)(stage, 140, 140, 20, function () {
+  var tutorialContainer = stage.createContainer().pos(700, 600);
+  var tutorialButton = (0, _buttons.createButton)(stage, 180, 180, 20, function () {
     selectCb('tutorial');
   }).pos(-20, -20);
-  var tutorialText1 = (0, _texts.createTexts)(stage, '?', 100, _consts.COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE');
-  var tutorialText2 = (0, _texts.createTexts)(stage, '?', 100, _consts.COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE');
+  var tutorialText1 = (0, _texts.createTexts)(stage, '?', 140, _consts.COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE');
+  var tutorialText2 = (0, _texts.createTexts)(stage, '?', 140, _consts.COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE');
   tutorialContainer.append(tutorialButton).append(tutorialText1).append(tutorialText2);
   container.append(tutorialContainer);
 
   var endlessContainer = stage.createContainer().pos(1060, 600);
-  var endlessButton = (0, _buttons.createButton)(stage, 140, 140, 20, function () {
+  var endlessButton = (0, _buttons.createButton)(stage, 180, 180, 20, function () {
     selectCb('endless');
   }).pos(-20, -20);
-  var endlessText1 = (0, _texts.createTexts)(stage, '\x01', 100, _consts.COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE');
-  var endlessText2 = (0, _texts.createTexts)(stage, '\x01', 100, _consts.COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE');
+  var endlessText1 = (0, _texts.createTexts)(stage, '\x01', 140, _consts.COLOR_R_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE');
+  var endlessText2 = (0, _texts.createTexts)(stage, '\x01', 140, _consts.COLOR_G_ARR).pos(5, 10).blendMode('SRC_ALPHA', 'ONE');
   endlessContainer.append(endlessButton).append(endlessText1).append(endlessText2);
   container.append(endlessContainer);
 
@@ -1575,8 +1659,8 @@ exports.default = function (stage, container) {
     changeOrientation: function changeOrientation(isVertical) {
       if (isVertical) {
         titleContainer.pos(135, 500);
-        tutorialContainer.pos(300, 1200);
-        endlessContainer.pos(680, 1200);
+        tutorialContainer.pos(260, 1200);
+        endlessContainer.pos(700, 1200);
         authorContainer.pos(420, 1800);
       }
     },
@@ -1659,7 +1743,7 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 
 var _consts = __webpack_require__(0);
 
-var D_PER_LEVEL = 300;
+var D_PER_LEVEL = 250;
 var D_COLOR_COUNT = [0, 3, 5, 7]; // the multiplier for how many base colors used in the map
 var D_STEP_BATCH = [0, 8, 5, 0, 3]; // the multiplier for how many steps are in a batch (because of symmetry)
 var D_STEP_SAME_POINT = [4, 3, 2]; // the multiplier for how many colors has been set in this point
@@ -1681,7 +1765,7 @@ var P_SYMMETRY_ALL_ROTATE_INC = 0;
 var SYMMETRY_INC_LEVELS = 16;
 var FAIL_STEP = 4;
 
-var P_2_COLOR_D_MIN = D_PER_LEVEL * 4;
+var P_2_COLOR_D_MIN = D_PER_LEVEL * 3;
 var P_3_COLOR_D_MIN = D_PER_LEVEL * 6;
 var P_2_COLOR_D_INC = 0.2 / D_PER_LEVEL;
 var P_3_COLOR_D_INC = 0.1 / D_PER_LEVEL;
@@ -1698,14 +1782,15 @@ var levelToDifficulty = function levelToDifficulty(level) {
 };
 
 var endless = exports.endless = function endless(_ref) {
-  var level = _ref.level,
-      timeUsed = _ref.timeUsed;
+  var seed = _ref.seed,
+      level = _ref.level,
+      timeUsed = _ref.timeUsed,
+      stepCount = _ref.stepCount;
 
   var difficulty = levelToDifficulty(level);
 
   // random utils
-  var seed = Math.floor(Math.random() * 1000000000);
-  var curSeed = seed;
+  var curSeed = seed + level * 4817;
   var curRandMul = 1;
   var getRandom = function getRandom(max) {
     var prevRandMul = curRandMul;
@@ -1751,6 +1836,11 @@ var endless = exports.endless = function endless(_ref) {
     symmetryType = SYMMETRY_ALL;
   } else if (symmetryRand < P_SYMMETRY_ALL_ROTATE + symmetryIncLevels * P_SYMMETRY_ALL_ROTATE_INC) {
     symmetryType = SYMMETRY_ALL_ROTATE;
+  }
+  if (level === 1) {
+    symmetryType = SYMMETRY_NONE;
+  } else if (level === 2) {
+    if (symmetryType === SYMMETRY_ALL) symmetryType = SYMMETRY_H;else if (symmetryType === SYMMETRY_ALL_ROTATE) symmetryType = SYMMETRY_V;
   }
 
   // generate color type
@@ -1875,12 +1965,100 @@ var endless = exports.endless = function endless(_ref) {
 
   var levelObj = {
     timeUsed: timeUsed,
+    stepCount: stepCount,
     title: '#' + (level < 10 ? '0' + level : level),
     seed: seed,
+    level: level,
     difficulty: currentD,
     map: colorMap
   };
   return levelObj;
+};
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = {
+  "三": "\n    [12,12]\n\n       +++++++\n\n\n\n        +++++\n\n\n\n      +++++++++\n\n\n  ",
+  "原": "\n    [12,12]\n      ++++++++\n      +   +\n      + +++++\n      + +   +\n      + +++++\n      + +   +\n      + +++++\n      +   +\n     +  + + +\n     + +  +  +\n    +    ++\n\n  ",
+  "色": "\n    [12,12]\n       +\n      +++++\n     +   +\n    +   +\n     +++++++\n     +  +  +\n     +  +  +\n     +++++++\n     +\n     +     +\n      ++++++\n\n  "
+};
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var SHARE_STR_VERSION = 0x1001;
+
+var toHexStr = function toHexStr(num, bytes) {
+  var ret = num.toString(16);
+  while (ret.length < bytes) {
+    ret = '0' + ret;
+  }return ret;
+};
+
+var createShareStr = function createShareStr(_ref) {
+  var seed = _ref.seed,
+      levelNum = _ref.levelNum,
+      timeUsed = _ref.timeUsed,
+      stepCount = _ref.stepCount;
+
+  var salt = Math.floor(Math.random() * (1 << 30));
+  var slices = [toHexStr(salt + seed + levelNum + timeUsed + stepCount ^ SHARE_STR_VERSION), toHexStr(salt + seed + timeUsed ^ stepCount, 8), toHexStr(salt, 8), toHexStr(salt + seed ^ timeUsed, 8), toHexStr(salt + seed + stepCount ^ levelNum, 8), toHexStr(salt ^ seed, 8)];
+  return SHARE_STR_VERSION + 'x' + slices.join('');
+};
+
+var parseShareStr = function parseShareStr(str) {
+  var _str$split = str.split('x', 2),
+      _str$split2 = _slicedToArray(_str$split, 2),
+      version = _str$split2[0],
+      slices = _str$split2[1];
+
+  if (parseInt(version, 10) !== SHARE_STR_VERSION) return null;
+  var arr = slices.match(/[0-9a-z]{8}/ig);
+  var salt = parseInt(arr[2], 16);
+  var seed = parseInt(arr[5], 16) ^ salt;
+  var timeUsed = parseInt(arr[3], 16) ^ salt + seed;
+  var stepCount = parseInt(arr[1], 16) ^ salt + seed + timeUsed;
+  var levelNum = parseInt(arr[4], 16) ^ salt + seed + stepCount;
+  var examing = parseInt(arr[0], 16) ^ salt + seed + levelNum + timeUsed + stepCount;
+  if (examing !== SHARE_STR_VERSION) return null;
+  return {
+    seed: seed,
+    levelNum: levelNum,
+    timeUsed: timeUsed,
+    stepCount: stepCount
+  };
+};
+
+var shareLevel = exports.shareLevel = function shareLevel(info) {
+  var str = createShareStr(info);
+  window.open(location.protocol + '//' + location.host + location.pathname + location.search + '#' + str, '_blank');
+};
+
+var getShareInfo = exports.getShareInfo = function getShareInfo() {
+  if (location.hash) {
+    var info = parseShareStr(location.hash.slice(1));
+    location.hash = '#';
+    if (info) return info;
+  }
+  return null;
 };
 
 /***/ })

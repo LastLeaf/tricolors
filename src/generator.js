@@ -4,7 +4,7 @@ import {
   B,
 } from './consts'
 
-const D_PER_LEVEL = 300
+const D_PER_LEVEL = 250
 const D_COLOR_COUNT = [0, 3, 5, 7] // the multiplier for how many base colors used in the map
 const D_STEP_BATCH = [0, 8, 5, 0, 3] // the multiplier for how many steps are in a batch (because of symmetry)
 const D_STEP_SAME_POINT = [4, 3, 2] // the multiplier for how many colors has been set in this point
@@ -26,7 +26,7 @@ const P_SYMMETRY_ALL_ROTATE_INC = 0
 const SYMMETRY_INC_LEVELS = 16
 const FAIL_STEP = 4
 
-const P_2_COLOR_D_MIN = D_PER_LEVEL * 4
+const P_2_COLOR_D_MIN = D_PER_LEVEL * 3
 const P_3_COLOR_D_MIN = D_PER_LEVEL * 6
 const P_2_COLOR_D_INC = 0.2 / D_PER_LEVEL
 const P_3_COLOR_D_INC = 0.1 / D_PER_LEVEL
@@ -42,12 +42,11 @@ const levelToDifficulty = (level) => {
   return level * D_PER_LEVEL
 }
 
-export const endless = ({level, timeUsed}) => {
+export const endless = ({seed, level, timeUsed, stepCount}) => {
   const difficulty = levelToDifficulty(level)
 
   // random utils
-  const seed = Math.floor(Math.random() * (1000000000))
-  let curSeed = seed
+  let curSeed = seed + level * 4817
   let curRandMul = 1
   const getRandom = (max) => {
     let prevRandMul = curRandMul
@@ -93,6 +92,12 @@ export const endless = ({level, timeUsed}) => {
     symmetryType = SYMMETRY_ALL
   } else if (symmetryRand < P_SYMMETRY_ALL_ROTATE + symmetryIncLevels * P_SYMMETRY_ALL_ROTATE_INC) {
     symmetryType = SYMMETRY_ALL_ROTATE
+  }
+  if (level === 1) {
+    symmetryType = SYMMETRY_NONE
+  } else if (level === 2) {
+    if (symmetryType === SYMMETRY_ALL) symmetryType = SYMMETRY_H
+    else if (symmetryType === SYMMETRY_ALL_ROTATE) symmetryType = SYMMETRY_V
   }
 
   // generate color type
@@ -213,8 +218,10 @@ export const endless = ({level, timeUsed}) => {
 
   const levelObj = {
     timeUsed,
+    stepCount,
     title: '#' + (level < 10 ? '0' + level : level),
     seed,
+    level,
     difficulty: currentD,
     map: colorMap
   }
