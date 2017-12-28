@@ -5,7 +5,7 @@ import TUTORIAL_1 from './levels/tutorial-1'
 import TUTORIAL_2 from './levels/tutorial-2'
 import TUTORIAL_3 from './levels/tutorial-3'
 import { endless } from './generator'
-import { getShareInfo } from './share'
+import { setShareType, getShareInfo } from './share'
 
 let tileUtils = null
 
@@ -66,6 +66,7 @@ export const init = (canvas, options) => {
     root.clear().append(coverContainer)
   }
 
+  setShareType(options)
   const shareInfo = getShareInfo()
   if (!shareInfo) {
     showCover()

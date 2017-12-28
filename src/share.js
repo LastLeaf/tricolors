@@ -1,5 +1,7 @@
 const SHARE_STR_VERSION = 0x1001
 
+let language = 'C'
+
 const toHexStr = (num, bytes) => {
   let ret = num.toString(16)
   while (ret.length < bytes) ret = '0' + ret
@@ -40,7 +42,10 @@ const parseShareStr = (str) => {
 
 export const shareLevel = (info) => {
   const str = createShareStr(info)
-  window.open(location.protocol + '//' + location.host + location.pathname + location.search + '#' + str, '_blank')
+  const url = location.protocol + '//' + location.host + location.pathname + location.search + '#' + str
+  document.getElementById('shareHint').innerHTML = language === 'zh-CN' ? '复制以下链接分享给好友' : 'Share this link'
+  document.getElementById('shareUrl').innerHTML = url
+  document.getElementById('shareWrapper').style.display = 'block'
 }
 
 export const getShareInfo = () => {
@@ -50,4 +55,8 @@ export const getShareInfo = () => {
     if (info) return info
   }
   return null
+}
+
+export const setShareType = (options) => {
+  language = options.language
 }

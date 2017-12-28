@@ -7,6 +7,12 @@
 <body style="background: #202020; overflow: hidden; margin: 0">
   <!-- <div style="position:fixed; top:50px; left:50px; width:100px; height:100px; background:#000000aa"></div> -->
   <canvas id="game" width="1920" height="1080"></canvas>
+  <div id="shareWrapper" style="display: none; position: fixed; background: rgba(0, 0, 0, 0.8); font-size: 20px; left: 0; right: 0; top: 0; bottom: 0">
+    <div style="position: absolute; background: #ccc; margin: auto; left: 0; right: 0; top: 0; bottom: 0; width: 280px; height: 160px; padding: 20px">
+      <div id="shareHint" style="color: #222; height: 40px"></div>
+      <textarea id="shareUrl" style="font-size: 20px; border: 1px solid #444; padding: 4px; color: #222; width: 270px; height: 110px"></textarea>
+    </div>
+  </div>
   <script src="./dist/game.js"></script>
   <script>
     (function(){
@@ -18,6 +24,11 @@
         gameCanvas.width = 1080
         gameCanvas.height = 1920
         isVertical = true
+      }
+
+      document.getElementById('shareWrapper').onclick = function(e){
+        if (e.target !== this) return
+        document.getElementById('shareWrapper').style.display = 'none'
       }
 
       var resizeCb = function(){

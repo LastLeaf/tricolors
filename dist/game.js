@@ -61,7 +61,7 @@ var game =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -221,23 +221,23 @@ exports.createTexts = undefined;
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-var _letters = __webpack_require__(9);
+var _letters = __webpack_require__(10);
 
 var _letters2 = _interopRequireDefault(_letters);
 
-var _numbers = __webpack_require__(10);
+var _numbers = __webpack_require__(11);
 
 var _numbers2 = _interopRequireDefault(_numbers);
 
-var _symbols = __webpack_require__(11);
+var _symbols = __webpack_require__(12);
 
 var _symbols2 = _interopRequireDefault(_symbols);
 
-var _special = __webpack_require__(12);
+var _special = __webpack_require__(13);
 
 var _special2 = _interopRequireDefault(_special);
 
-var _chinese = __webpack_require__(18);
+var _chinese = __webpack_require__(14);
 
 var _chinese2 = _interopRequireDefault(_chinese);
 
@@ -317,33 +317,112 @@ for (var k in _letters2.default) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var SHARE_STR_VERSION = 0x1001;
+
+var language = 'C';
+
+var toHexStr = function toHexStr(num, bytes) {
+  var ret = num.toString(16);
+  while (ret.length < bytes) {
+    ret = '0' + ret;
+  }return ret;
+};
+
+var createShareStr = function createShareStr(_ref) {
+  var seed = _ref.seed,
+      levelNum = _ref.levelNum,
+      timeUsed = _ref.timeUsed,
+      stepCount = _ref.stepCount;
+
+  var salt = Math.floor(Math.random() * (1 << 30));
+  var slices = [toHexStr(salt + seed + levelNum + timeUsed + stepCount ^ SHARE_STR_VERSION), toHexStr(salt + seed + timeUsed ^ stepCount, 8), toHexStr(salt, 8), toHexStr(salt + seed ^ timeUsed, 8), toHexStr(salt + seed + stepCount ^ levelNum, 8), toHexStr(salt ^ seed, 8)];
+  return SHARE_STR_VERSION + 'x' + slices.join('');
+};
+
+var parseShareStr = function parseShareStr(str) {
+  var _str$split = str.split('x', 2),
+      _str$split2 = _slicedToArray(_str$split, 2),
+      version = _str$split2[0],
+      slices = _str$split2[1];
+
+  if (parseInt(version, 10) !== SHARE_STR_VERSION) return null;
+  var arr = slices.match(/[0-9a-z]{8}/ig);
+  var salt = parseInt(arr[2], 16);
+  var seed = parseInt(arr[5], 16) ^ salt;
+  var timeUsed = parseInt(arr[3], 16) ^ salt + seed;
+  var stepCount = parseInt(arr[1], 16) ^ salt + seed + timeUsed;
+  var levelNum = parseInt(arr[4], 16) ^ salt + seed + stepCount;
+  var examing = parseInt(arr[0], 16) ^ salt + seed + levelNum + timeUsed + stepCount;
+  if (examing !== SHARE_STR_VERSION) return null;
+  return {
+    seed: seed,
+    levelNum: levelNum,
+    timeUsed: timeUsed,
+    stepCount: stepCount
+  };
+};
+
+var shareLevel = exports.shareLevel = function shareLevel(info) {
+  var str = createShareStr(info);
+  var url = location.protocol + '//' + location.host + location.pathname + location.search + '#' + str;
+  document.getElementById('shareHint').innerHTML = language === 'zh-CN' ? '复制以下链接分享给好友' : 'Share this link';
+  document.getElementById('shareUrl').innerHTML = url;
+  document.getElementById('shareWrapper').style.display = 'block';
+};
+
+var getShareInfo = exports.getShareInfo = function getShareInfo() {
+  if (location.hash) {
+    var info = parseShareStr(location.hash.slice(1));
+    location.hash = '#';
+    if (info) return info;
+  }
+  return null;
+};
+
+var setShareType = exports.setShareType = function setShareType(options) {
+  language = options.language;
+};
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.init = exports.changeOrientation = undefined;
 
-var _simpleGl = __webpack_require__(5);
+var _simpleGl = __webpack_require__(6);
 
-var _tiles = __webpack_require__(8);
+var _tiles = __webpack_require__(9);
 
 var _tiles2 = _interopRequireDefault(_tiles);
 
-var _cover = __webpack_require__(13);
+var _cover = __webpack_require__(15);
 
 var _cover2 = _interopRequireDefault(_cover);
 
-var _tutorial = __webpack_require__(14);
+var _tutorial = __webpack_require__(16);
 
 var _tutorial2 = _interopRequireDefault(_tutorial);
 
-var _tutorial3 = __webpack_require__(15);
+var _tutorial3 = __webpack_require__(17);
 
 var _tutorial4 = _interopRequireDefault(_tutorial3);
 
-var _tutorial5 = __webpack_require__(16);
+var _tutorial5 = __webpack_require__(18);
 
 var _tutorial6 = _interopRequireDefault(_tutorial5);
 
-var _generator = __webpack_require__(17);
+var _generator = __webpack_require__(19);
 
-var _share = __webpack_require__(19);
+var _share = __webpack_require__(4);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -415,6 +494,7 @@ var init = exports.init = function init(canvas, options) {
     root.clear().append(coverContainer);
   };
 
+  (0, _share.setShareType)(options);
   var shareInfo = (0, _share.getShareInfo)();
   if (!shareInfo) {
     showCover();
@@ -449,7 +529,7 @@ var init = exports.init = function init(canvas, options) {
 };
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -467,8 +547,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var rectVs = __webpack_require__(6);
-var rectFs = __webpack_require__(7);
+var rectVs = __webpack_require__(7);
+var rectFs = __webpack_require__(8);
 
 var createVertexShader = function createVertexShader(gl, src) {
   var shaderLog = '';
@@ -931,19 +1011,19 @@ var SimpleGL = exports.SimpleGL = function () {
 }();
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports) {
 
 module.exports = "attribute vec2 aPoint;\r\nuniform vec2 uCanvasSize;\r\n\r\nvoid main(void) {\r\n  gl_Position = vec4(aPoint * mat2( 2.0/uCanvasSize.x,0, 0,-2.0/uCanvasSize.y ) + vec2(-1, 1), 0, 1);\r\n}\r\n"
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports) {
 
 module.exports = "uniform highp vec4 uColor;\r\n\r\nvoid main(void) {\r\n  gl_FragColor = uColor;\r\n}\r\n"
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1428,7 +1508,7 @@ var _texts = __webpack_require__(3);
 
 var _animate = __webpack_require__(2);
 
-var _share = __webpack_require__(19);
+var _share = __webpack_require__(4);
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -1465,7 +1545,7 @@ var parseLevelStr = function parseLevelStr(str) {
 /* eslint-disable no-use-before-define */
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1507,7 +1587,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1530,7 +1610,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1553,7 +1633,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1566,11 +1646,28 @@ exports.default = {
   '\x01': '\n    [6,8]\n     ++\n     +++\n     ++++\n     +++++\n     ++++\n     +++\n     ++\n  ',
   '\x02': '\n    [6,8]\n\n     +++++\n      +  +\n         +\n         +\n     +++++\n\n  ',
   '\x03': '\n    [6,8]\n\n     +   +\n      + +\n       +\n      + +\n     +   +\n\n  ',
-  '\x04': '\n    [6,8]\n\n      ++++\n        ++\n       + +\n      +  +\n     +\n\n  '
+  '\x04': '\n    [6,8]\n\n      ++++\n        ++\n       + +\n      +  +\n     +\n\n  ',
+  '\x05': '\n    [6,8]\n\n       +\n       +\n     + + +\n      +++\n       +\n\n  '
 };
 
 /***/ }),
-/* 13 */
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = {
+  "三": "\n    [12,12]\n\n       +++++++\n\n\n\n        +++++\n\n\n\n      +++++++++\n\n\n  ",
+  "原": "\n    [12,12]\n      ++++++++\n      +   +\n      + +++++\n      + +   +\n      + +++++\n      + +   +\n      + +++++\n      +   +\n     +  + + +\n     + +  +  +\n    +    ++\n\n  ",
+  "色": "\n    [12,12]\n       +\n      +++++\n     +   +\n    +   +\n     +++++++\n     +  +  +\n     +  +  +\n     +++++++\n     +\n     +     +\n      ++++++\n\n  "
+};
+
+/***/ }),
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1671,7 +1768,7 @@ exports.default = function (stage, container, options) {
 };
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1690,7 +1787,7 @@ exports.default = function () {
 };
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1709,7 +1806,7 @@ exports.default = function () {
 };
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1728,7 +1825,7 @@ exports.default = function () {
 };
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1973,92 +2070,6 @@ var endless = exports.endless = function endless(_ref) {
     map: colorMap
   };
   return levelObj;
-};
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = {
-  "三": "\n    [12,12]\n\n       +++++++\n\n\n\n        +++++\n\n\n\n      +++++++++\n\n\n  ",
-  "原": "\n    [12,12]\n      ++++++++\n      +   +\n      + +++++\n      + +   +\n      + +++++\n      + +   +\n      + +++++\n      +   +\n     +  + + +\n     + +  +  +\n    +    ++\n\n  ",
-  "色": "\n    [12,12]\n       +\n      +++++\n     +   +\n    +   +\n     +++++++\n     +  +  +\n     +  +  +\n     +++++++\n     +\n     +     +\n      ++++++\n\n  "
-};
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
-var SHARE_STR_VERSION = 0x1001;
-
-var toHexStr = function toHexStr(num, bytes) {
-  var ret = num.toString(16);
-  while (ret.length < bytes) {
-    ret = '0' + ret;
-  }return ret;
-};
-
-var createShareStr = function createShareStr(_ref) {
-  var seed = _ref.seed,
-      levelNum = _ref.levelNum,
-      timeUsed = _ref.timeUsed,
-      stepCount = _ref.stepCount;
-
-  var salt = Math.floor(Math.random() * (1 << 30));
-  var slices = [toHexStr(salt + seed + levelNum + timeUsed + stepCount ^ SHARE_STR_VERSION), toHexStr(salt + seed + timeUsed ^ stepCount, 8), toHexStr(salt, 8), toHexStr(salt + seed ^ timeUsed, 8), toHexStr(salt + seed + stepCount ^ levelNum, 8), toHexStr(salt ^ seed, 8)];
-  return SHARE_STR_VERSION + 'x' + slices.join('');
-};
-
-var parseShareStr = function parseShareStr(str) {
-  var _str$split = str.split('x', 2),
-      _str$split2 = _slicedToArray(_str$split, 2),
-      version = _str$split2[0],
-      slices = _str$split2[1];
-
-  if (parseInt(version, 10) !== SHARE_STR_VERSION) return null;
-  var arr = slices.match(/[0-9a-z]{8}/ig);
-  var salt = parseInt(arr[2], 16);
-  var seed = parseInt(arr[5], 16) ^ salt;
-  var timeUsed = parseInt(arr[3], 16) ^ salt + seed;
-  var stepCount = parseInt(arr[1], 16) ^ salt + seed + timeUsed;
-  var levelNum = parseInt(arr[4], 16) ^ salt + seed + stepCount;
-  var examing = parseInt(arr[0], 16) ^ salt + seed + levelNum + timeUsed + stepCount;
-  if (examing !== SHARE_STR_VERSION) return null;
-  return {
-    seed: seed,
-    levelNum: levelNum,
-    timeUsed: timeUsed,
-    stepCount: stepCount
-  };
-};
-
-var shareLevel = exports.shareLevel = function shareLevel(info) {
-  var str = createShareStr(info);
-  window.open(location.protocol + '//' + location.host + location.pathname + location.search + '#' + str, '_blank');
-};
-
-var getShareInfo = exports.getShareInfo = function getShareInfo() {
-  if (location.hash) {
-    var info = parseShareStr(location.hash.slice(1));
-    location.hash = '#';
-    if (info) return info;
-  }
-  return null;
 };
 
 /***/ })
